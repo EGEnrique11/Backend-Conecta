@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Servicio - CONECTA</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 40px; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #0056b3; padding-bottom: 10px; margin-bottom: 30px; }
+        .header h1 { margin: 0; color: #0056b3; font-size: 24px; }
+        .section { margin-bottom: 25px; }
+        .title { font-weight: bold; background-color: #f8f9fa; padding: 8px; border-left: 4px solid #0056b3; font-size: 16px; margin-bottom: 10px;}
+        table { width: 100%; border-collapse: collapse; }
+        td { padding: 10px; border: 1px solid #ddd; font-size: 14px; }
+        .label { font-weight: bold; color: #555; }
+        .firma-box { margin-top: 60px; text-align: center; width: 40%; float: left; }
+        .firma-line { border-top: 1px solid #000; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CONTRATO DE PRESTACIÓN DE SERVICIOS ISP</h1>
+        <p>CONECTA - Código de Contrato: <strong th:text="${contrato.id}">0000</strong></p>
+    </div>
+
+    <div class="section">
+        <div class="title">1. Datos del Titular</div>
+        <table>
+            <tr>
+                <td class="label">Nombre / Razón Social:</td>
+                <td th:text="${cliente.nombres + ' ' + cliente.apellidoPaterno}">Juan Perez</td>
+                <td class="label">Documento:</td>
+                <td th:text="${cliente.documento}">12345678</td>
+            </tr>
+            <tr>
+                <td class="label">Dirección de Instalación:</td>
+                <td colspan="3" th:text="${direccion.direccionCompleta}">Av. Principal 123, Distrito</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="title">2. Detalles del Servicio Contratado</div>
+        <table>
+            <tr>
+                <td class="label">Plan:</td>
+                <td th:text="${plan.nombre}">Fibra 100 Mbps</td>
+                <td class="label">Renta Mensual:</td>
+                <td>S/ <span th:text="${plan.precio}">100.00</span></td>
+            </tr>
+            <tr>
+                <td class="label">Fecha de Activación:</td>
+                <td th:text="${contrato.fechaActivacion}">01/01/2026</td>
+                <td class="label">Ciclo de Facturación:</td>
+                <td>Día <span th:text="${ciclo.diaEmision}">15</span> de cada mes</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section" th:if="${contrato.fechaFinPromocion != null}">
+        <div class="title">3. Beneficio Promocional</div>
+        <p style="font-size: 14px; padding: 0 10px;">
+            El cliente cuenta con un beneficio promocional aplicado a su servicio, el cual se mantendrá vigente hasta el: 
+            <strong th:text="${contrato.fechaFinPromocion}">01/12/2026</strong>.
+        </p>
+    </div>
+
+    <div style="clear: both; margin-top: 50px;">
+        <p style="font-size: 12px; text-align: justify;">
+            El cliente declara su conformidad con la instalación y activación del servicio descrito en el presente documento, sujetándose a los términos y condiciones de CONECTA.
+        </p>
+    </div>
+
+    <div>
+        <div class="firma-box" style="margin-left: 10%;">
+            <div class="firma-line"></div>
+            <p>Firma del Cliente<br>DNI: <span th:text="${cliente.documento}"></span></p>
+        </div>
+        <div class="firma-box" style="margin-left: 10%;">
+            <div class="firma-line"></div>
+            <p>CONECTA ISP<br>Área de Operaciones</p>
+        </div>
+    </div>
+</body>
+</html>

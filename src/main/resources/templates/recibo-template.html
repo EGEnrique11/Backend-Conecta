@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Recibo de Servicio</title>
+    <style>
+        /* CSS Nativo optimizado para OpenHTMLtoPDF */
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f6f4f0; /* 60% Dominante */
+            color: #333333;
+            font-size: 12px;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            width: 100%;
+            border-bottom: 2px solid #008d92; /* 10% Acento */
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            color: #0a6067; /* 10% Acento */
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .greeting-section {
+            margin-bottom: 20px;
+        }
+        .highlight-box {
+            background-color: #99bfb5; /* 30% Secundario */
+            border-left: 5px solid #0a6067; /* 10% Acento */
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        .highlight-title {
+            color: #0a6067;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        .highlight-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333333;
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th {
+            background-color: #64b0a8; /* 30% Secundario */
+            color: #ffffff;
+            text-align: left;
+            padding: 8px;
+            font-size: 12px;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #99bfb5;
+        }
+        .totals-table {
+            width: 50%;
+            float: right;
+        }
+        .totals-table td {
+            border: none;
+            padding: 5px 8px;
+        }
+        .totals-table .grand-total {
+            font-weight: bold;
+            color: #0a6067; /* 10% Acento */
+            border-top: 2px solid #0a6067;
+        }
+        .footer {
+            clear: both;
+            margin-top: 40px;
+            font-size: 10px;
+            color: #666666;
+            text-align: justify;
+        }
+    </style>
+</head>
+<body>
+
+    <table class="header">
+        <tr>
+            <td style="width: 50%; border: none;">
+                <img src="https://via.placeholder.com/150x50.png?text=LOGO+CONECTA" alt="Logo Conecta" />
+            </td>
+            <td style="width: 50%; text-align: right; border: none;">
+                <h1 class="company-name">CONECTA SAC</h1>
+                <p style="margin: 0;">RUC: 10123456789</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="greeting-section">
+        <h2>¡Hola, <span th:text="${cliente.nombres + ' ' + cliente.apellidoPaterno + (cliente.apellidoMaterno != null ? ' ' + cliente.apellidoMaterno : '')}">Nombre Cliente</span>! Te enviamos tu recibo del mes.</h2>
+        <p style="margin: 0;" th:text="${direccion.direccionCompleta}">Dirección</p>
+        <p style="margin: 0;" th:text="${direccion.distrito.nombre + ' - ' + direccion.distrito.provincia.nombre + ' - ' + direccion.distrito.provincia.departamento.nombre}">Distrito - P - D</p>
+        <p style="margin: 0;">DNI: <span th:text="${cliente.documento}">12345678</span></p>
+    </div>
+
+    <div class="highlight-box">
+        <table style="margin: 0;">
+            <tr>
+                <td style="border: none; width: 33%;">
+                    <p class="highlight-title">Total a pagar</p>
+                    <p class="highlight-amount" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 0.00</p>
+                </td>
+                <td style="border: none; width: 33%; text-align: center;">
+                    <p class="highlight-title">Último día de pago</p>
+                    <p class="highlight-amount" th:text="${#temporals.format(recibo.fechaVencimiento, 'dd/MMM/yyyy')}">---</p>
+                </td>
+                <td style="border: none; width: 34%; text-align: right; vertical-align: top;">
+                    <p style="color: #4a4a4a; font-size: 11px; font-weight: bold; margin: 0; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 3px;">
+                        Evita la suspensión y cobro de reconexión pagando a tiempo.
+                    </p>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <h3 style="color: #0a6067; margin-bottom: 10px;">Tus datos de facturación</h3>
+    <table>
+        <tr>
+            <th style="width: 33%;">Recibo N°</th>
+            <th style="width: 33%;">Emisión del recibo</th>
+            <th style="width: 34%;">Periodo Facturado</th>
+        </tr>
+        <tr>
+            <td th:text="${reciboFolio}">S001-000000000000</td>
+            <td th:text="${#temporals.format(recibo.fechaEmision, 'dd/MMM/yyyy')}">---</td>
+            <td th:text="'Inicio: ' + ${#temporals.format(recibo.periodoInicio, 'dd-MMM')} + ' - Fin: ' + ${#temporals.format(recibo.periodoFin, 'dd-MMM')}">---</td>
+        </tr>
+    </table>
+
+    <h3 style="color: #0a6067; margin-bottom: 10px;">Detalle de tu recibo</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Conceptos</th>
+                <th>Unidad</th>
+                <th style="text-align: right;">Monto (Incl. IGV)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="background-color: #f6f4f0; font-weight: bold;">
+                <td colspan="3" th:text="'Plan: ' + ${contrato.plan.nombre}">Plan Básico</td>
+            </tr>
+            <tr th:each="detalle : ${detalles}">
+                <td th:text="${detalle.descripcion}">Concepto</td>
+                <td th:text="${detalle.cantidadDias != null ? detalle.cantidadDias + ' días' : ''}">30 días</td>
+                <td style="text-align: right;" th:text="${#numbers.formatDecimal(detalle.subtotal, 1, 2)}">0.00</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td>Sub Total (sin IGV):</td>
+            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(subTotalCalculado, 1, 2)}">S/ 0.00</td>
+        </tr>
+        <tr>
+            <td>IGV (18%):</td>
+            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(igvCalculado, 1, 2)}">S/ 0.00</td>
+        </tr>
+        <tr class="grand-total">
+            <td>TOTAL A PAGAR:</td>
+            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 0.00</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p>Documento válido para efectos tributarios según Res. de Sup. No. 007-99/SUNAT.</p>
+        <p>Los saldos de hasta S/0.09 que no cancele por falta de moneda para el pago en efectivo o por redondeo, se mantendrán como pendientes para su próximo recibo.</p>
+    </div>
+
+</body>
+</html>
