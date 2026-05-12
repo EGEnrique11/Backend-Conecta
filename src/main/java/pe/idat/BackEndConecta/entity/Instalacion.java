@@ -30,11 +30,9 @@ public class Instalacion {
     @Column(name = "fecha_programada", nullable = false)
     private LocalDate fechaProgramada;
 
-    @Column(name = "franja_horaria", nullable = false, length = 20)
-    private String franjaHoraria;
-
-    @Column(name = "bloque_asignado", length = 50)
-    private String bloqueAsignado;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bloque_horario_id")
+    private BloqueHorario bloqueHorario;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)

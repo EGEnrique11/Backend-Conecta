@@ -47,13 +47,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
             log.warn("El token JWT ha expirado");
             // DEVOLVEMOS 401 INMEDIATAMENTE Y CORTAMOS EL FILTRO
-            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"error\": \"Token expirado\"}");
             return; 
         } catch (Exception e) {
             log.error("Error desconocido al parsear el token JWT {}", e.getMessage());
-            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){

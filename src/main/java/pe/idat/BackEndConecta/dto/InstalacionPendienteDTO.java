@@ -7,6 +7,8 @@ import java.time.LocalDate;
 
 @Data
 @Builder
+@lombok.NoArgsConstructor
+@lombok.AllArgsConstructor
 public class InstalacionPendienteDTO {
     private Integer id;
     private Integer contratoId;
@@ -15,4 +17,5 @@ public class InstalacionPendienteDTO {
     private LocalDate fechaProgramada;
     private String franjaHoraria;
     private String estado;
+    private String tecnicoNombre;
 }

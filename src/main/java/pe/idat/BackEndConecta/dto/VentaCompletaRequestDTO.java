@@ -3,7 +3,6 @@ package pe.idat.BackEndConecta.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -27,10 +26,6 @@ public class VentaCompletaRequestDTO {
     @NotNull(message = "La fechaProgramada es requerida") 
     @FutureOrPresent(message = "La fecha no puede ser en el pasado") 
     private LocalDate fechaProgramada;
-    
-    @NotNull(message = "La franja horaria es requerida") 
-    @Pattern(regexp = "^(MAÑANA|TARDE)$", message = "La franja horaria debe ser MAÑANA o TARDE") 
-    private String franjaHoraria;
     
     private Boolean necesitaRouter;
 }

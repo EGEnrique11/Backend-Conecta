@@ -105,8 +105,29 @@ CREATE TABLE direccion (
     FOREIGN KEY (cliente_id) REFERENCES cliente(id) ON DELETE CASCADE,
     FOREIGN KEY (distrito_id) REFERENCES distrito(id)
 );
-
--- 5. CATÁLOGO COMERCIAL
+-- 5 TURNOS Y BLOQUES
+CREATE TABLE turno (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(50) NOT NULL UNIQUE,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    activo BOOLEAN DEFAULT TRUE
+);
+CREATE TABLE bloque_horario (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    turno_id INT NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    es_refrigerio BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (turno_id) REFERENCES turno(id) ON DELETE CASCADE
+);
+CREATE TABLE tecnico_turno (
+    empleado_id INT PRIMARY KEY,
+    turno_id INT NOT NULL,
+    FOREIGN KEY (empleado_id) REFERENCES empleado(id) ON DELETE CASCADE,
+    FOREIGN KEY (turno_id) REFERENCES turno(id)
+);
+-- 6. CATÁLOGO COMERCIAL
 CREATE TABLE servicio (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
@@ -150,7 +171,7 @@ CREATE TABLE plan_promocion (
     FOREIGN KEY (promocion_id) REFERENCES promocion(id) ON DELETE CASCADE
 );
 
--- 6. GESTIÓN ADMINISTRATIVA: CONTRATOS, RECIBOS Y SUSPENSIONES
+-- 7. GESTIÓN ADMINISTRATIVA: CONTRATOS, RECIBOS Y SUSPENSIONES
 CREATE TABLE ciclo_pago (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL,
@@ -192,13 +213,13 @@ CREATE TABLE instalacion (
     id INT AUTO_INCREMENT PRIMARY KEY,
     contrato_id INT NOT NULL,
     tecnico_id INT NULL,           
+    bloque_horario_id INT NULL,
     fecha_programada DATE NOT NULL,
-    franja_horaria VARCHAR(20) NOT NULL, 
-    bloque_asignado VARCHAR(50), -- Columna agregada después de franja_horaria
     estado VARCHAR(20) DEFAULT 'PENDIENTE', 
-    observaciones TEXT,            
+    observaciones TEXT,         
     FOREIGN KEY (contrato_id) REFERENCES contrato(id),
-    FOREIGN KEY (tecnico_id) REFERENCES empleado(id)
+    FOREIGN KEY (tecnico_id) REFERENCES empleado(id),
+    FOREIGN KEY (bloque_horario_id) REFERENCES bloque_horario(id)
 );
 
 -- ==============================================================================

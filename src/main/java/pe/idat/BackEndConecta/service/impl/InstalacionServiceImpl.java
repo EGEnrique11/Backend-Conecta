@@ -116,23 +116,19 @@ public class InstalacionServiceImpl implements InstalacionService {
         long totalTecnicos = empleadoRepository.count();
         long cuposMaximos = totalTecnicos * 2;
 
-        Long agendadas = instalacionRepository.countInstalacionesEnFranja(dto.getFechaProgramada(),
-                dto.getFranjaHoraria());
+        Long agendadas = instalacionRepository.countInstalacionesEnFecha(dto.getFechaProgramada());
 
-        // Excluimos a la instalación actual en caso esté reprogramandose exactamente a
-        // la misma hora as the user logic might apply, but actually we just check
-        // capacity limitation.
-        boolean isSameSlot = instalacion.getFechaProgramada().equals(dto.getFechaProgramada())
-                && instalacion.getFranjaHoraria().equals(dto.getFranjaHoraria());
+        boolean isSameSlot = instalacion.getFechaProgramada().equals(dto.getFechaProgramada());
 
         long efectivasAgendadas = isSameSlot ? (agendadas - 1) : agendadas;
 
         if (efectivasAgendadas >= cuposMaximos) {
-            throw new IllegalArgumentException("Cupos agotados para esta nueva franja horaria.");
+            throw new IllegalArgumentException("Cupos agotados para este día.");
         }
 
         instalacion.setFechaProgramada(dto.getFechaProgramada());
-        instalacion.setFranjaHoraria(dto.getFranjaHoraria());
+        instalacion.setTecnico(null);
+        instalacion.setBloqueHorario(null);
         instalacion.setEstado(EstadoInstalacion.REPROGRAMADA);
 
         if (dto.getObservaciones() != null) {

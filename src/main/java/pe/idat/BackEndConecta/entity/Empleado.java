@@ -38,6 +38,12 @@ public class Empleado extends Persona implements UserDetails {
     @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private java.util.Set<Role> roles = new java.util.HashSet<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinTable(name = "tecnico_turno",
+            joinColumns = @JoinColumn(name = "empleado_id"),
+            inverseJoinColumns = @JoinColumn(name = "turno_id"))
+    private Turno turno;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()

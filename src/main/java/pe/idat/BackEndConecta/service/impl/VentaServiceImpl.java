@@ -55,11 +55,11 @@ public class VentaServiceImpl implements VentaService {
         }
 
         long totalTecnicos = empleadoRepository.count();
-        long cuposMaximos = totalTecnicos * 2;
+        long cuposMaximos = totalTecnicos * 2; // O ajustado según turnos
         
-        Long agendadas = instalacionRepository.countInstalacionesEnFranja(dto.getFechaProgramada(), dto.getFranjaHoraria());
+        Long agendadas = instalacionRepository.countInstalacionesEnFecha(dto.getFechaProgramada());
         if (agendadas != null && agendadas >= cuposMaximos) {
-            throw new IllegalArgumentException("Cupos agotados para esta franja horaria.");
+            throw new IllegalArgumentException("Cupos agotados para este día.");
         }
 
         // --- GESTIÓN DE CLIENTE ---
@@ -158,7 +158,6 @@ public class VentaServiceImpl implements VentaService {
         Instalacion instalacion = Instalacion.builder()
                 .contrato(contrato)
                 .fechaProgramada(dto.getFechaProgramada())
-                .franjaHoraria(dto.getFranjaHoraria())
                 .estado(EstadoInstalacion.PENDIENTE)
                 .build();
 

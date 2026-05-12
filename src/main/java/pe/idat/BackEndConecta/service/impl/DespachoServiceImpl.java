@@ -23,41 +23,91 @@ public class DespachoServiceImpl implements DespachoService {
 
     private final InstalacionRepository instalacionRepository;
     private final EmpleadoRepository empleadoRepository;
+    private final pe.idat.BackEndConecta.repository.BloqueHorarioRepository bloqueRepository;
 
     @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerPendientesPorFechaYFranja(LocalDate fecha, String franja) {
-        List<Instalacion> pendientes = instalacionRepository.findPendientesByFranja(fecha, franja);
-        
-        return pendientes.stream().map(inst -> InstalacionPendienteDTO.builder()
-                .id(inst.getId())
-                .contratoId(inst.getContrato().getId())
-                .nombreCliente(inst.getContrato().getCliente().getNombres() + " " + inst.getContrato().getCliente().getApellidoPaterno())
-                .direccionCompleta(inst.getContrato().getDireccion().getDireccionCompleta())
-                .fechaProgramada(inst.getFechaProgramada())
-                .franjaHoraria(inst.getFranjaHoraria())
-                .build()
-        ).collect(Collectors.toList());
+        // Franja is deprecated. The UI currently sends it, but we can ignore it or use it to filter Bloques later.
+        List<Instalacion> instalaciones = instalacionRepository.findPendientes(fecha);
+
+        return instalaciones.stream().map(inst -> {
+            InstalacionPendienteDTO dto = new InstalacionPendienteDTO();
+            dto.setId(inst.getId());
+            dto.setContratoId(inst.getContrato().getId());
+            dto.setNombreCliente(inst.getContrato().getCliente().getNombres() + " " + inst.getContrato().getCliente().getApellidoPaterno());
+            dto.setDireccionCompleta(inst.getContrato().getDireccion().getDireccionCompleta());
+            dto.setFechaProgramada(inst.getFechaProgramada());
+            if (inst.getBloqueHorario() != null) {
+                dto.setFranjaHoraria(inst.getBloqueHorario().getHoraInicio().toString() + " - " + inst.getBloqueHorario().getHoraFin().toString());
+            } else {
+                dto.setFranjaHoraria("SIN ASIGNAR");
+            }
+            dto.setEstado(inst.getEstado().name());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InstalacionPendienteDTO> obtenerAsignadasPorFecha(LocalDate fecha) {
+        List<Instalacion> instalaciones = instalacionRepository.findRutasActivas(fecha);
+
+        return instalaciones.stream().map(inst -> {
+            InstalacionPendienteDTO dto = new InstalacionPendienteDTO();
+            dto.setId(inst.getId());
+            dto.setContratoId(inst.getContrato().getId());
+            dto.setNombreCliente(inst.getContrato().getCliente().getNombres() + " " + inst.getContrato().getCliente().getApellidoPaterno());
+            dto.setDireccionCompleta(inst.getContrato().getDireccion().getDireccionCompleta());
+            dto.setFechaProgramada(inst.getFechaProgramada());
+            if (inst.getBloqueHorario() != null) {
+                dto.setFranjaHoraria(inst.getBloqueHorario().getHoraInicio().toString() + " - " + inst.getBloqueHorario().getHoraFin().toString());
+            } else {
+                dto.setFranjaHoraria("SIN ASIGNAR");
+            }
+            dto.setEstado(inst.getEstado().name());
+            dto.setTecnicoNombre(inst.getTecnico() != null ? inst.getTecnico().getNombres() + " " + inst.getTecnico().getApellidoPaterno() : "Desconocido");
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Override
     @Transactional
     public Map<String, String> asignarTecnicoABloque(Integer instalacionId, AsignarTecnicoDTO dto) {
-        // 1. Validar Instalación
-        Instalacion instalacion = buscarInstalacionValidada(instalacionId);
+        Instalacion instalacion = instalacionRepository.findById(instalacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Instalación no encontrada"));
 
-        // 2. Validar Técnico y su Rol
-        Empleado tecnico = buscarTecnicoValidado(dto.getTecnicoId());
+        Empleado tecnico = empleadoRepository.findById(dto.getTecnicoId())
+                .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado"));
 
-        // 3. Validación de Cruces de Horario (SRP rules aplicadas localmente)
-        validarCrucesDeHorario(dto.getTecnicoId(), instalacion.getFechaProgramada(), dto.getBloqueAsignado());
+        if (!tecnico.getRoles().stream().anyMatch(r -> r.getRoleName().equals("ROLE_TECNICO"))) {
+            throw new IllegalArgumentException("El empleado seleccionado no es un técnico");
+        }
 
-        // 4. Persistencia
+        pe.idat.BackEndConecta.entity.BloqueHorario bloque = null;
+        if (dto.getBloqueId() != null) {
+            bloque = bloqueRepository.findById(dto.getBloqueId())
+                .orElseThrow(() -> new IllegalArgumentException("Bloque no encontrado"));
+                
+            boolean bloqueOcupado = instalacionRepository.existsByTecnicoIdAndBloqueId(tecnico.getId(), instalacion.getFechaProgramada(), bloque.getId());
+            if (bloqueOcupado) {
+                throw new IllegalArgumentException("El técnico ya tiene una instalación asignada en este bloque");
+            }
+            instalacion.setBloqueHorario(bloque);
+        }
+
         instalacion.setTecnico(tecnico);
-        instalacion.setBloqueAsignado(dto.getBloqueAsignado());
+        
+        // Cambio Automático: De PENDIENTE a EN_RUTA
+        if (instalacion.getEstado() == EstadoInstalacion.PENDIENTE) {
+            instalacion.setEstado(EstadoInstalacion.EN_RUTA);
+        }
+
         instalacionRepository.save(instalacion);
 
-        return Map.of("mensaje", "Técnico asignado correctamente al bloque " + dto.getBloqueAsignado());
+        Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Técnico asignado correctamente al bloque.");
+        return response;
     }
 
     @Override
@@ -83,16 +133,21 @@ public class DespachoServiceImpl implements DespachoService {
         
         List<Instalacion> agenda = instalacionRepository.findByTecnicoIdAndMesAndAnio(tecnico.getId(), mes, anio);
 
-        return agenda.stream().map(inst -> InstalacionPendienteDTO.builder()
-                .id(inst.getId())
-                .contratoId(inst.getContrato().getId())
-                .nombreCliente(inst.getContrato().getCliente().getNombres() + " " + inst.getContrato().getCliente().getApellidoPaterno())
-                .direccionCompleta(inst.getContrato().getDireccion().getDireccionCompleta())
-                .fechaProgramada(inst.getFechaProgramada())
-                .franjaHoraria(inst.getFranjaHoraria())
-                .estado(inst.getEstado().name())
-                .build()
-        ).collect(Collectors.toList());
+        return agenda.stream().map(inst -> {
+            InstalacionPendienteDTO dto = new InstalacionPendienteDTO();
+            dto.setId(inst.getId());
+            dto.setContratoId(inst.getContrato().getId());
+            dto.setNombreCliente(inst.getContrato().getCliente().getNombres() + " " + inst.getContrato().getCliente().getApellidoPaterno());
+            dto.setDireccionCompleta(inst.getContrato().getDireccion().getDireccionCompleta());
+            dto.setFechaProgramada(inst.getFechaProgramada());
+            if (inst.getBloqueHorario() != null) {
+                dto.setFranjaHoraria(inst.getBloqueHorario().getHoraInicio().toString() + " - " + inst.getBloqueHorario().getHoraFin().toString());
+            } else {
+                dto.setFranjaHoraria("SIN ASIGNAR");
+            }
+            dto.setEstado(inst.getEstado().name());
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     // --- MÉTODOS PRIVADOS SRP ---
@@ -110,14 +165,8 @@ public class DespachoServiceImpl implements DespachoService {
 
     private Empleado buscarTecnicoValidado(Integer tecnicoId) {
         // Validación 2: Verifica que exista y tenga ROLE_TECNICO
-        return empleadoRepository.findByIdAndRoleNameNative(tecnicoId, "ROLE_TECNICO")
+        return empleadoRepository.findByIdAndRoleName(tecnicoId, "ROLE_TECNICO")
                 .orElseThrow(() -> new IllegalArgumentException("El empleado no existe o no tiene el rol de Técnico asignado."));
     }
 
-    private void validarCrucesDeHorario(Integer tecnicoId, LocalDate fecha, String bloque) {
-        boolean conflicto = instalacionRepository.existsByTecnicoIdAndBloque(tecnicoId, fecha, bloque);
-        if (conflicto) {
-            throw new IllegalArgumentException("El técnico ya tiene una instalación asignada en ese bloque horario para la fecha seleccionada.");
-        }
-    }
 }
