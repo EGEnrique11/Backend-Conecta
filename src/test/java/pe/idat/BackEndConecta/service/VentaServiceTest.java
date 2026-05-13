@@ -105,7 +105,7 @@ public class VentaServiceTest {
 
         // Simulaciones (Mocks)
         when(empleadoRepository.count()).thenReturn(10L);
-        when(instalacionRepository.countInstalacionesEnFecha(any(LocalDate.class))).thenReturn(0L);
+        //when(instalacionRepository.countInstalacionesEnFecha(any(LocalDate.class))).thenReturn(0L);
         when(instalacionRepository.save(any(Instalacion.class))).thenReturn(instalacionGuardada);
         when(clienteRepository.findByDocumento("76543219")).thenReturn(Optional.empty());
         when(clienteMapper.toClienteEntity(any(ClienteDTO.class))).thenReturn(clienteGuardado);

@@ -53,6 +53,8 @@ public class InstalacionServiceImpl implements InstalacionService {
         Instalacion instalacion = buscarYValidarInstalacion(instalacionId, "cancelar");
 
         instalacion.setEstado(EstadoInstalacion.CANCELADA);
+        instalacion.setTecnico(null);
+        instalacion.setBloqueHorario(null);
         agregarObservacion(instalacion, dto);
         instalacionRepository.save(instalacion);
 
@@ -76,7 +78,8 @@ public class InstalacionServiceImpl implements InstalacionService {
         instalacion.setEstado(EstadoInstalacion.REPROGRAMADA);
 
         if (dto.getMotivo() != null && !dto.getMotivo().isEmpty()) {
-            instalacion.setObservaciones("Motivo de reprogramacion: " + dto.getMotivo());
+            String observacionesAntiguas = instalacion.getObservaciones() != null ? instalacion.getObservaciones() + " | " : "";
+            instalacion.setObservaciones(observacionesAntiguas + "Motivo de Reprogramación: " + dto.getMotivo());
         }
 
         instalacionRepository.save(instalacion);

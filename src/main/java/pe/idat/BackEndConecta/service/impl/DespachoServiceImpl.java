@@ -5,12 +5,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.idat.BackEndConecta.dto.AsignarTecnicoDTO;
 import pe.idat.BackEndConecta.dto.InstalacionPendienteDTO;
-import pe.idat.BackEndConecta.dto.InstalacionReprogramarDTO;
 import pe.idat.BackEndConecta.entity.BloqueHorario;
-import pe.idat.BackEndConecta.entity.Contrato;
 import pe.idat.BackEndConecta.entity.Empleado;
 import pe.idat.BackEndConecta.entity.Instalacion;
-import pe.idat.BackEndConecta.entity.enums.EstadoContrato;
 import pe.idat.BackEndConecta.entity.enums.EstadoInstalacion;
 import pe.idat.BackEndConecta.repository.BloqueHorarioRepository;
 import pe.idat.BackEndConecta.repository.ContratoRepository;
@@ -81,27 +78,6 @@ public class DespachoServiceImpl implements DespachoService {
     }
 
     @Override
-    @Transactional
-    public Map<String, String> actualizarEstado(Integer instalacionId, EstadoInstalacion estado) {
-        Instalacion instalacion = instalacionRepository.findById(instalacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Instalación no encontrada con ID: " + instalacionId));
-
-        instalacion.setEstado(estado);
-        instalacionRepository.save(instalacion);
-
-        if (estado == EstadoInstalacion.COMPLETADA) {
-            Contrato contrato = instalacion.getContrato();
-            if (contrato != null) {
-                contrato.setEstado(EstadoContrato.ACTIVO);
-                contrato.setFechaActivacion(LocalDate.now());
-                contratoRepository.save(contrato);
-            }
-        }
-
-        return Map.of("mensaje", "Estado de la instalación actualizado a: " + estado.name());
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer mes, Integer anio, String username) {
         Empleado tecnico = empleadoRepository.findByUsername(username)
@@ -114,36 +90,10 @@ public class DespachoServiceImpl implements DespachoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InstalacionPendienteDTO> buscarInstalaciones(String term) {
-        return instalacionRepository.buscarPorTermino(term).stream()
+    public List<InstalacionPendienteDTO> buscarInstalaciones(String criterio, String valor) {
+        return instalacionRepository.buscarPorCriterioYValor(criterio, valor).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    @Transactional
-    public Map<String, String> reprogramarInstalacion(Integer instalacionId, InstalacionReprogramarDTO dto) {
-        Instalacion instalacion = instalacionRepository.findById(instalacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Instalación no encontrada con ID: " + instalacionId));
-
-        instalacion.setFechaProgramada(dto.getNuevaFecha());
-        instalacion.setEstado(EstadoInstalacion.REPROGRAMADA);
-
-        // Liberar técnico y bloque horario
-        instalacion.setTecnico(null);
-        instalacion.setBloqueHorario(null);
-
-        // Actualizar observaciones
-        if (dto.getMotivo() != null && !dto.getMotivo().isEmpty()) {
-            String observacionesAntiguas = instalacion.getObservaciones() != null
-                    ? instalacion.getObservaciones() + " | "
-                    : "";
-            instalacion.setObservaciones(observacionesAntiguas + "Motivo de Reprogramación: " + dto.getMotivo());
-        }
-
-        instalacionRepository.save(instalacion);
-
-        return Map.of("mensaje", "Instalación reprogramada exitosamente. Recursos liberados.");
     }
 
     // --- MÉTODOS PRIVADOS SRP ---
