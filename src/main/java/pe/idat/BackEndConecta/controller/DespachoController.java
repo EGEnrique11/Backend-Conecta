@@ -64,6 +64,20 @@ public class DespachoController {
         return ResponseEntity.ok(despachoService.actualizarEstado(instalacionId, estado));
     }
 
+    @GetMapping("/buscar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<InstalacionPendienteDTO>> buscarInstalaciones(@RequestParam String term) {
+        return ResponseEntity.ok(despachoService.buscarInstalaciones(term));
+    }
+
+    @PutMapping("/reprogramar/{instalacionId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> reprogramarInstalacion(
+            @PathVariable Integer instalacionId,
+            @Valid @RequestBody pe.idat.BackEndConecta.dto.InstalacionReprogramarDTO dto) {
+        return ResponseEntity.ok(despachoService.reprogramarInstalacion(instalacionId, dto));
+    }
+
     @GetMapping("/tecnico/agenda")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
     public ResponseEntity<List<InstalacionPendienteDTO>> obtenerAgendaTecnico(

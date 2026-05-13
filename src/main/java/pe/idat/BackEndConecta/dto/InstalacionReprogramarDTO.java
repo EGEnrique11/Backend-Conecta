@@ -8,9 +8,9 @@ import java.time.LocalDate;
 
 @Data
 public class InstalacionReprogramarDTO {
-    @NotNull(message = "La fechaProgramada es requerida")
+    @NotNull(message = "La nuevaFecha es requerida")
     @FutureOrPresent(message = "La fecha no puede ser en el pasado")
-    private LocalDate fechaProgramada;
+    private LocalDate nuevaFecha;
 
-    private String observaciones;
+    private String motivo;
 }

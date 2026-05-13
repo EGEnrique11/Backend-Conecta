@@ -18,4 +18,6 @@ public class InstalacionPendienteDTO {
     private String franjaHoraria;
     private String estado;
     private String tecnicoNombre;
+    private String celularCliente;
+    private String documentoCliente;
 }

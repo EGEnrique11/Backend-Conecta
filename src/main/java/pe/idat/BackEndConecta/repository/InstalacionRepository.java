@@ -45,4 +45,7 @@ public interface InstalacionRepository extends JpaRepository<Instalacion, Intege
 
     @Query("SELECT i FROM Instalacion i WHERE i.tecnico.id = :tecnicoId AND MONTH(i.fechaProgramada) = :mes AND YEAR(i.fechaProgramada) = :anio ORDER BY i.fechaProgramada ASC, i.bloqueHorario.horaInicio ASC")
     List<Instalacion> findByTecnicoIdAndMesAndAnio(@Param("tecnicoId") Integer tecnicoId, @Param("mes") Integer mes, @Param("anio") Integer anio);
+
+    @Query("SELECT i FROM Instalacion i WHERE i.contrato.cliente.documento LIKE %:term% OR i.contrato.cliente.nombres LIKE %:term% OR i.contrato.cliente.apellidoPaterno LIKE %:term%")
+    List<Instalacion> buscarPorTermino(@Param("term") String term);
 }
