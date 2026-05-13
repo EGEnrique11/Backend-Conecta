@@ -35,7 +35,8 @@ public class DespachoServiceImpl implements DespachoService {
     @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerPendientesPorFechaYFranja(LocalDate fecha, String franja) {
-        return instalacionRepository.findPendientes(fecha).stream()
+        List<EstadoInstalacion> estadosValidos = List.of(EstadoInstalacion.PENDIENTE, EstadoInstalacion.REPROGRAMADA);
+        return instalacionRepository.findPendientes(fecha, estadosValidos).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
     }
@@ -43,7 +44,8 @@ public class DespachoServiceImpl implements DespachoService {
     @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerAsignadasPorFecha(LocalDate fecha) {
-        return instalacionRepository.findRutasActivas(fecha).stream()
+        List<EstadoInstalacion> estadosValidos = List.of(EstadoInstalacion.PENDIENTE, EstadoInstalacion.REPROGRAMADA);
+        return instalacionRepository.findRutasActivas(fecha, estadosValidos).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
     }

@@ -19,6 +19,7 @@ import pe.idat.BackEndConecta.service.InstalacionService;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -125,8 +126,10 @@ public class InstalacionServiceImpl implements InstalacionService {
     private void validarCuposDisponibles(LocalDate nuevaFecha, LocalDate fechaActual) {
         long totalTecnicos = empleadoRepository.count();
         long cuposMaximos = totalTecnicos * 2;
-
-        Long agendadas = instalacionRepository.countInstalacionesEnFecha(nuevaFecha);
+        // 1. Definimos los estados que contabilizan como "cupo ocupado"
+        List<EstadoInstalacion> estadosQueOcupanCupo = List.of(EstadoInstalacion.PENDIENTE, EstadoInstalacion.REPROGRAMADA);
+        // 2. Pasamos la lista de Enums al repositorio
+        Long agendadas = instalacionRepository.countInstalacionesEnFecha(nuevaFecha, estadosQueOcupanCupo);
         boolean isSameSlot = fechaActual.equals(nuevaFecha);
         long efectivasAgendadas = isSameSlot ? (agendadas - 1) : agendadas;
 

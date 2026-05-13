@@ -13,20 +13,20 @@ import java.util.List;
 
 public interface InstalacionRepository extends JpaRepository<Instalacion, Integer> {
 
-    @Query("SELECT COUNT(i) FROM Instalacion i WHERE i.contrato.cliente.id = :clienteId AND i.estado = 'PENDIENTE'")
-    Long countPendientesByClienteId(@Param("clienteId") Integer clienteId);
+    @Query("SELECT COUNT(i) FROM Instalacion i WHERE i.contrato.cliente.id = :clienteId AND i.estado = :estado")
+    Long countPendientesByClienteId(@Param("clienteId") Integer clienteId, @Param("estado") EstadoInstalacion estado);
 
-    @Query("SELECT COUNT(i) FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.estado IN ('PENDIENTE', 'REPROGRAMADA')")
-    Long countInstalacionesEnFecha(@Param("fecha") LocalDate fecha);
+    @Query("SELECT COUNT(i) FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.estado IN :estados")
+    Long countInstalacionesEnFecha(@Param("fecha") LocalDate fecha, @Param("estados") List<EstadoInstalacion> estados);
 
-    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.tecnico IS NULL AND i.estado IN ('PENDIENTE', 'REPROGRAMADA')")
-    List<Instalacion> findPendientes(@Param("fecha") LocalDate fecha);
+    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.tecnico IS NULL AND i.estado IN :estados")
+    List<Instalacion> findPendientes(@Param("fecha") LocalDate fecha, @Param("estados") List<EstadoInstalacion> estados);
 
-    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.tecnico IS NOT NULL AND i.estado IN ('PENDIENTE', 'REPROGRAMADA')")
-    List<Instalacion> findAsignadas(@Param("fecha") LocalDate fecha);
+    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.tecnico IS NOT NULL AND i.estado IN :estados")
+    List<Instalacion> findAsignadas(@Param("fecha") LocalDate fecha, @Param("estados") List<EstadoInstalacion> estados);
 
-    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.estado IN ('EN_RUTA', 'EN_PROCESO')")
-    List<Instalacion> findRutasActivas(@Param("fecha") LocalDate fecha);
+    @Query("SELECT i FROM Instalacion i WHERE i.fechaProgramada = :fecha AND i.estado IN :estados")
+    List<Instalacion> findRutasActivas(@Param("fecha") LocalDate fecha, @Param("estados") List<EstadoInstalacion> estados);
 
     @Query("SELECT CASE WHEN COUNT(i) > 0 THEN true ELSE false END FROM Instalacion i WHERE i.tecnico.id = :tecnicoId AND i.fechaProgramada = :fecha AND i.bloqueHorario.id = :bloqueId AND i.estado != 'CANCELADA'")
     boolean existsByTecnicoIdAndBloqueId(@Param("tecnicoId") Integer tecnicoId, @Param("fecha") LocalDate fecha, @Param("bloqueId") Integer bloqueId);
