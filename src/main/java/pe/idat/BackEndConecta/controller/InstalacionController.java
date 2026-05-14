@@ -38,4 +38,10 @@ public class InstalacionController {
             @Valid @RequestBody InstalacionReprogramarDTO dto) {
         return ResponseEntity.ok(instalacionService.reprogramarInstalacion(id, dto));
     }
+
+    @PutMapping("/{id}/iniciar")
+    public ResponseEntity<Map<String, String>> iniciarInstalacion(
+            @PathVariable Integer id) {
+        return ResponseEntity.ok(instalacionService.iniciarInstalacion(id));
+    }
 }

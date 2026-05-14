@@ -46,6 +46,9 @@ public interface InstalacionRepository extends JpaRepository<Instalacion, Intege
     @Query("SELECT i FROM Instalacion i WHERE i.tecnico.id = :tecnicoId AND MONTH(i.fechaProgramada) = :mes AND YEAR(i.fechaProgramada) = :anio ORDER BY i.fechaProgramada ASC, i.bloqueHorario.horaInicio ASC")
     List<Instalacion> findByTecnicoIdAndMesAndAnio(@Param("tecnicoId") Integer tecnicoId, @Param("mes") Integer mes, @Param("anio") Integer anio);
 
+    @Query("SELECT i FROM Instalacion i WHERE i.tecnico.id = :tecnicoId AND i.fechaProgramada = :fechaProgramada AND i.estado NOT IN (pe.idat.BackEndConecta.entity.enums.EstadoInstalacion.CANCELADA, pe.idat.BackEndConecta.entity.enums.EstadoInstalacion.COMPLETADA) ORDER BY i.bloqueHorario.horaInicio ASC")
+    List<Instalacion> findByTecnicoIdAndFechaProgramadaOrderByBloqueHorario_HoraInicioAsc(@Param("tecnicoId") Integer tecnicoId, @Param("fechaProgramada") LocalDate fechaProgramada);
+
     @Query("SELECT i FROM Instalacion i WHERE " +
            "(:criterio = 'DOCUMENTO' AND i.contrato.cliente.documento = :valor) OR " +
            "(:criterio = 'NOMBRE' AND (LOWER(i.contrato.cliente.nombres) LIKE LOWER(CONCAT('%', :valor, '%')) OR LOWER(i.contrato.cliente.apellidoPaterno) LIKE LOWER(CONCAT('%', :valor, '%')))) OR " +

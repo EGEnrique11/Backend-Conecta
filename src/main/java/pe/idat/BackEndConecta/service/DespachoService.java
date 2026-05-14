@@ -14,7 +14,7 @@ public interface DespachoService {
 
     Map<String, String> asignarTecnicoABloque(Integer instalacionId, AsignarTecnicoDTO dto);
 
-    List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer mes, Integer anio, String username);
+    List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer tecnicoId, LocalDate fecha);
 
     List<InstalacionPendienteDTO> buscarInstalaciones(String criterio, String valor);
 }

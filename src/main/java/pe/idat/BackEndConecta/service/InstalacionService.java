@@ -8,4 +8,5 @@ public interface InstalacionService {
     Map<String, String> completarInstalacion(Integer instalacionId, InstalacionObservacionDTO dto);
     Map<String, String> cancelarInstalacion(Integer instalacionId, InstalacionObservacionDTO dto);
     Map<String, String> reprogramarInstalacion(Integer instalacionId, InstalacionReprogramarDTO dto);
+    Map<String, String> iniciarInstalacion(Integer instalacionId);
 }

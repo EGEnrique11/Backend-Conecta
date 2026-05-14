@@ -87,6 +87,26 @@ public class InstalacionServiceImpl implements InstalacionService {
         return Map.of("mensaje", "La instalación ha sido reprogramada con éxito.");
     }
 
+    @Override
+    @Transactional
+    public Map<String, String> iniciarInstalacion(Integer instalacionId) {
+        Instalacion instalacion = instalacionRepository.findById(instalacionId)
+                .orElseThrow(() -> new IllegalArgumentException("Instalacion no encontrada con ID: " + instalacionId));
+        
+        if (instalacion.getEstado() != EstadoInstalacion.EN_RUTA && instalacion.getEstado() != EstadoInstalacion.PENDIENTE && instalacion.getEstado() != EstadoInstalacion.REPROGRAMADA) {
+             throw new IllegalArgumentException("La instalación no se puede iniciar en su estado actual (" + instalacion.getEstado() + ").");
+        }
+
+        instalacion.setEstado(EstadoInstalacion.EN_PROCESO);
+        
+        String observacionesAntiguas = instalacion.getObservaciones() != null ? instalacion.getObservaciones() + " | " : "";
+        instalacion.setObservaciones(observacionesAntiguas + "Instalación iniciada en campo por el técnico.");
+        
+        instalacionRepository.save(instalacion);
+        
+        return Map.of("mensaje", "Instalación iniciada con éxito.");
+    }
+
     // Metodos
     private Instalacion buscarYValidarInstalacion(Integer instalacionId, String accion) {
         Instalacion instalacion = instalacionRepository.findById(instalacionId)

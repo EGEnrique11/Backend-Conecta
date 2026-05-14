@@ -59,11 +59,9 @@ public class DespachoController {
     @GetMapping("/tecnico/agenda")
     @PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
     public ResponseEntity<List<InstalacionPendienteDTO>> obtenerAgendaTecnico(
-            @RequestParam Integer mes,
-            @RequestParam Integer anio,
-            Principal principal) {
+            @RequestParam Integer tecnicoId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha) {
 
-        String username = principal.getName();
-        return ResponseEntity.ok(despachoService.obtenerAgendaTecnico(mes, anio, username));
+        return ResponseEntity.ok(despachoService.obtenerAgendaTecnico(tecnicoId, fecha));
     }
 }

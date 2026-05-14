@@ -20,4 +20,6 @@ public class InstalacionPendienteDTO {
     private String tecnicoNombre;
     private String celularCliente;
     private String documentoCliente;
+    private String detallePedido;
+    private String nombrePromocion;
 }

@@ -77,11 +77,8 @@ public class DespachoServiceImpl implements DespachoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer mes, Integer anio, String username) {
-        Empleado tecnico = empleadoRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Técnico no encontrado con el username: " + username));
-
-        return instalacionRepository.findByTecnicoIdAndMesAndAnio(tecnico.getId(), mes, anio).stream()
+    public List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer tecnicoId, LocalDate fecha) {
+        return instalacionRepository.findByTecnicoIdAndFechaProgramadaOrderByBloqueHorario_HoraInicioAsc(tecnicoId, fecha).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
     }
@@ -113,7 +110,7 @@ public class DespachoServiceImpl implements DespachoService {
                         "El empleado no existe o no tiene el rol de Técnico asignado."));
     }
 
-    // NUEVO MÉTODO DE MAPEO
+    //MÉTODO DE MAPEO
     private InstalacionPendienteDTO mapearAInstalacionPendienteDTO(Instalacion inst) {
         InstalacionPendienteDTO dto = new InstalacionPendienteDTO();
         dto.setId(inst.getId());
@@ -138,6 +135,18 @@ public class DespachoServiceImpl implements DespachoService {
         dto.setTecnicoNombre(inst.getTecnico() != null
                 ? inst.getTecnico().getNombres() + " " + inst.getTecnico().getApellidoPaterno()
                 : "Desconocido");
+
+        if (inst.getContrato() != null && inst.getContrato().getPlan() != null && inst.getContrato().getPlan().getServicio() != null) {
+            dto.setDetallePedido(inst.getContrato().getPlan().getNombre() + " - " + inst.getContrato().getPlan().getServicio().getNombre());
+        } else {
+            dto.setDetallePedido("Sin detalle");
+        }
+
+        if (inst.getContrato() != null && inst.getContrato().getPromocion() != null) {
+            dto.setNombrePromocion(inst.getContrato().getPromocion().getNombre());
+        } else {
+            dto.setNombrePromocion("Sin promoción especial");
+        }
 
         return dto;
     }
