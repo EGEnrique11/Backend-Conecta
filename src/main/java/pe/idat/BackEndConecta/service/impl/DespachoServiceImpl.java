@@ -10,7 +10,6 @@ import pe.idat.BackEndConecta.entity.Empleado;
 import pe.idat.BackEndConecta.entity.Instalacion;
 import pe.idat.BackEndConecta.entity.enums.EstadoInstalacion;
 import pe.idat.BackEndConecta.repository.BloqueHorarioRepository;
-import pe.idat.BackEndConecta.repository.ContratoRepository;
 import pe.idat.BackEndConecta.repository.EmpleadoRepository;
 import pe.idat.BackEndConecta.repository.InstalacionRepository;
 import pe.idat.BackEndConecta.service.DespachoService;
@@ -27,7 +26,6 @@ public class DespachoServiceImpl implements DespachoService {
     private final InstalacionRepository instalacionRepository;
     private final EmpleadoRepository empleadoRepository;
     private final BloqueHorarioRepository bloqueRepository;
-    private final ContratoRepository contratoRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -41,7 +39,7 @@ public class DespachoServiceImpl implements DespachoService {
     @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerAsignadasPorFecha(LocalDate fecha) {
-        List<EstadoInstalacion> estadosValidos = List.of(EstadoInstalacion.PENDIENTE, EstadoInstalacion.REPROGRAMADA);
+        List<EstadoInstalacion> estadosValidos = List.of(EstadoInstalacion.EN_RUTA, EstadoInstalacion.EN_PROCESO);
         return instalacionRepository.findRutasActivas(fecha, estadosValidos).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
@@ -67,8 +65,8 @@ public class DespachoServiceImpl implements DespachoService {
 
         instalacion.setTecnico(tecnico);
 
-        // Cambio Automático: De PENDIENTE a EN_RUTA
-        if (instalacion.getEstado() == EstadoInstalacion.PENDIENTE) {
+        // Cambio Automático: De PENDIENTE o REPROGRAMADA a EN_RUTA
+        if (instalacion.getEstado() == EstadoInstalacion.PENDIENTE || instalacion.getEstado() == EstadoInstalacion.REPROGRAMADA) {
             instalacion.setEstado(EstadoInstalacion.EN_RUTA);
         }
 
