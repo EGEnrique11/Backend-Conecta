@@ -98,7 +98,7 @@ public class TurnoServiceImpl implements TurnoService {
 
     @Override
     @Transactional
-    public BloqueHorario editarBloque(Integer bloqueId, BloqueHorarioRequestDTO dto) {
+    public BloqueHorario actualizarBloque(Integer bloqueId, BloqueHorarioRequestDTO dto) {
         BloqueHorario bloque = bloqueHorarioRepository.findById(bloqueId)
                 .orElseThrow(() -> new IllegalArgumentException("Bloque no encontrado"));
                 

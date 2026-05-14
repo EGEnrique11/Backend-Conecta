@@ -12,7 +12,7 @@ public interface TurnoService {
     BloqueHorario agregarBloqueATurno(Integer turnoId, BloqueHorarioRequestDTO dto);
     List<Turno> obtenerTurnos();
     List<BloqueHorario> obtenerBloquesPorTurno(Integer turnoId);
-    BloqueHorario editarBloque(Integer bloqueId, BloqueHorarioRequestDTO dto);
+    BloqueHorario actualizarBloque(Integer bloqueId, BloqueHorarioRequestDTO dto);
     void eliminarBloque(Integer bloqueId);
     Turno obtenerTurnoDeTecnico(Integer tecnicoId);
     void asignarTurnoATecnico(Integer tecnicoId, Integer turnoId);
