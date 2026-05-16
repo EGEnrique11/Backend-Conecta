@@ -2,12 +2,15 @@ package pe.idat.BackEndConecta.service.impl;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import pe.idat.BackEndConecta.entity.Contrato;
 import pe.idat.BackEndConecta.entity.Recibo;
+import pe.idat.BackEndConecta.repository.ContratoRepository;
 import pe.idat.BackEndConecta.repository.ReciboRepository;
 import pe.idat.BackEndConecta.service.PdfService;
 
@@ -15,11 +18,13 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+
 @Service
 @RequiredArgsConstructor
 public class PdfServiceImpl implements PdfService {
 
     private final ReciboRepository reciboRepository;
+    private final ContratoRepository contratoRepository;
     private final TemplateEngine templateEngine;
 
     @Override
@@ -45,7 +50,7 @@ public class PdfServiceImpl implements PdfService {
         context.setVariable("cliente", contrato.getCliente());
         context.setVariable("direccion", contrato.getDireccion());
         context.setVariable("detalles", recibo.getDetalles());
-        
+
         // Variables Virtuales extras (Cálculos de vista)
         context.setVariable("reciboFolio", reciboFormateado);
         context.setVariable("subTotalCalculado", subTotalCalculado);
@@ -56,14 +61,41 @@ public class PdfServiceImpl implements PdfService {
 
         // 5. Conversión: HTML -> PDF Byte Array (OpenHTMLtoPDF)
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            String baseUri = new ClassPathResource("/static/").getURL().toString();
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode(); // Rápido y ligero para textos transaccionales
-            builder.withHtmlContent(htmlContent, null); // null base URI, usando inline CSS/Images
+            builder.withHtmlContent(htmlContent, baseUri);
             builder.toStream(os);
             builder.run();
             return os.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Error generador de PDF: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] generarContratoPdf(Integer contratoId) {
+        Contrato contrato = contratoRepository.findById(contratoId)
+                .orElseThrow(() -> new RuntimeException("Contrato con ID: " + contratoId + " no fue encontrado"));
+        Context context = new Context();
+        context.setVariable("contrato", contrato);
+        context.setVariable("cliente", contrato.getCliente());
+        context.setVariable("direccion", contrato.getDireccion());
+        context.setVariable("plan", contrato.getPlan());
+        context.setVariable("ciclo", contrato.getCicloPago().getDiaEmision());
+        String htmlContent = templateEngine.process("contrato-template", context);
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            String baseUri = new ClassPathResource("/static/").getURL().toString();
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(htmlContent, baseUri);
+            builder.toStream(os);
+            builder.run();
+            return os.toByteArray();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar contrato.pdf"+ e.getMessage(), e);
         }
     }
 }

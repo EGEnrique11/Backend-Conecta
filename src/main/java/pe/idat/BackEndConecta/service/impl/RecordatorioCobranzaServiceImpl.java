@@ -2,10 +2,14 @@ package pe.idat.BackEndConecta.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import pe.idat.BackEndConecta.entity.Recibo;
 import pe.idat.BackEndConecta.entity.enums.EstadoPago;
+import pe.idat.BackEndConecta.event.AvisoMoraEvent;
+import pe.idat.BackEndConecta.event.RecordatorioPreventivoEvent;
 import pe.idat.BackEndConecta.repository.ReciboRepository;
 import pe.idat.BackEndConecta.service.NotificacionService;
 import pe.idat.BackEndConecta.service.RecordatorioCobranzaService;
@@ -21,10 +25,10 @@ import java.util.List;
 public class RecordatorioCobranzaServiceImpl implements RecordatorioCobranzaService {
 
     private final ReciboRepository reciboRepository;
-    private final NotificacionService notificacionService;
+    private final ApplicationEventPublisher eventPublisher;
     
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
+    //private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+/* 
     private void procesarRecordatorioPreventivo() {
         LocalDate fechaObjetivo = LocalDate.now().plusDays(1);
         List<Recibo> recibos = reciboRepository.findByEstadoPagoAndFechaVencimiento(EstadoPago.PENDIENTE, fechaObjetivo);
@@ -70,13 +74,29 @@ public class RecordatorioCobranzaServiceImpl implements RecordatorioCobranzaServ
         
         log.info("Dunning de Mora Finalizado: {} correos de contingencia emitidos.", cont);
     }
+*/
 
     @Override
-    @Scheduled(cron = "0 0 9 * * ?") // Todos los días a las 9:00 AM
-    public void enviarRecordatoriosGenerales() {
-        log.info("--- Iniciando JOB de Dunning (Cobranza Automática) 09:00 AM ---");
-        procesarRecordatorioPreventivo();
-        procesarAvisoMora();
-        log.info("--- JOB de Dunning finalizado con éxito ---");
+    @Scheduled(cron = "0 0 7 * * ?")
+    public void enviarRecordatorioPreventivo() {
+        log.info("Iniciando proceso automático: Recordatorios Preventivos...");
+        LocalDate fechaPreventiva = LocalDate.now().plusDays(2);
+        List<Recibo> recibos = reciboRepository.findByEstadoPagoAndFechaVencimiento(EstadoPago.PENDIENTE, fechaPreventiva);
+        for (Recibo recibo : recibos){
+            eventPublisher.publishEvent(new RecordatorioPreventivoEvent(this, recibo.getId()));
+        }
+        log.info("Dunning Preventivo Finalizado: {} eventos emitidos en base {}.", recibos.size(), fechaPreventiva);
+    }
+
+    @Override
+    public void enviarRecordatorioMora() {
+        log.info("Iniciando proceso automático: Recordatorios de Mora...");
+        LocalDate fechaFin = LocalDate.now().minusDays(1);
+        LocalDate fechaInicio = LocalDate.now().minusDays(4);
+        List<Recibo> recibos = reciboRepository.findByEstadoPagoAndFechaVencimientoBetween(EstadoPago.VENCIDO, fechaInicio, fechaFin);
+        for (Recibo recibo : recibos) {
+            eventPublisher.publishEvent(new AvisoMoraEvent(this, recibo.getId()));
+        }
+        log.info("Dunning de Mora Finalizado: {} eventos de contingencia emitidos.", recibos.size());
     }
 }

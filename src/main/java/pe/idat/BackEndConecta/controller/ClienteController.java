@@ -16,6 +16,8 @@ import pe.idat.BackEndConecta.service.ClienteService;
 import java.util.HashMap;
 import java.util.Map;
 
+import pe.idat.BackEndConecta.service.FacturacionService;
+
 @RestController
 @RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ import java.util.Map;
 public class ClienteController {
 
     private final ClienteService clienteService;
+    private final FacturacionService facturacionService;
 
     @PostMapping("/registro")
     public ResponseEntity<Map<String, Object>> registrarCliente(@Valid @RequestBody ClienteRegistrationDTO dto) {
@@ -61,6 +64,18 @@ public class ClienteController {
         return clienteService.buscarPorDni(dni)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/tiene-deuda")
+    public ResponseEntity<Map<String, Object>> verificarDeudaPendiente(@PathVariable Integer id) {
+        return ResponseEntity.ok(facturacionService.verificarDeudaPendiente(id));
+    }
+    @GetMapping("/buscar")
+    public ResponseEntity<Page<ClienteDTO>> buscarClientesPaginados(
+            @RequestParam(required = false) String criterio,
+            @RequestParam(required = false) String valor,
+            @PageableDefault(size = 10) Pageable pageable) {
+        return ResponseEntity.ok(clienteService.buscarClientesPaginados(criterio, valor, pageable));
     }
 
     @PutMapping("/{id}")

@@ -1,188 +1,461 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="es">
+
 <head>
     <meta charset="UTF-8" />
-    <title>Recibo de Servicio</title>
+    <title>Recibo de Servicio - CONECTA</title>
     <style>
         /* CSS Nativo optimizado para OpenHTMLtoPDF */
         @page {
             size: A4;
             margin: 1.5cm;
         }
+
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background-color: #f6f4f0; /* 60% Dominante */
             color: #333333;
             font-size: 12px;
             margin: 0;
             padding: 0;
         }
-        .header {
+
+        /* Utilidades Generales */
+        .text-primary { color: #0a6067; }
+        .text-secondary { color: #008d92; }
+        .text-bold { font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+
+        /* HEADER (Logo Izquierda, Saludo Derecha) */
+        table.header-table {
             width: 100%;
-            border-bottom: 2px solid #008d92; /* 10% Acento */
-            padding-bottom: 10px;
+            border-collapse: collapse;
             margin-bottom: 20px;
         }
-        .company-name {
-            color: #0a6067; /* 10% Acento */
-            font-size: 24px;
+
+        table.header-table td {
+            border: none;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .logo {
+            max-width: 140px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .company-info {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .greeting-box {
+            text-align: right;
+        }
+
+        .greeting-box h2 {
+            color: #0a6067;
+            font-size: 18px;
+            margin: 0 0 5px 0;
+        }
+
+        .greeting-box p {
+            margin: 2px 0;
+            font-size: 12px;
+            color: #444;
+        }
+
+        /* BARRA DE ALERTA */
+        .alert-bar {
+            width: 100%;
+            background-color: #f6f4f0;
+            border-top: 2px solid #0a6067;
+            padding: 8px 0;
+            margin-bottom: 20px;
+        }
+
+        .alert-bar p {
+            margin: 0 10px;
+            color: #0a6067;
             font-weight: bold;
-            margin: 0;
+            font-size: 11px;
         }
-        .greeting-section {
-            margin-bottom: 20px;
+
+        /* CAJA PRINCIPAL DE COBRO (3 Columnas) */
+        table.highlight-box {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border: 2px solid #008d92;
+            border-radius: 8px;
+            margin-bottom: 30px;
         }
-        .highlight-box {
-            background-color: #99bfb5; /* 30% Secundario */
-            border-left: 5px solid #0a6067; /* 10% Acento */
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 4px;
+
+        table.highlight-box td {
+            width: 33.33%;
+            padding: 15px 10px;
+            text-align: center;
+            border-right: 1px solid #99bfb5;
+            vertical-align: middle;
         }
-        .highlight-title {
+
+        table.highlight-box td:last-child {
+            border-right: none;
+        }
+
+        .hl-title {
             color: #0a6067;
             font-size: 14px;
             font-weight: bold;
             margin: 0 0 5px 0;
         }
-        .highlight-amount {
-            font-size: 20px;
+
+        .hl-amount {
+            color: #0a6067;
+            font-size: 26px;
             font-weight: bold;
-            color: #333333;
             margin: 0;
         }
-        table {
+
+        .hl-date {
+            color: #333;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        /* SECCIÓN MEDIA: DATOS Y PERIODO (2 Columnas) */
+        table.mid-section {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        table.mid-section td {
+            border: none;
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .section-title {
+            color: #0a6067;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+        }
+
+        table.info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.info-table td {
+            padding: 4px 0;
+            font-size: 12px;
+            border: none;
+        }
+
+        /* Caja de Periodo Facturado */
+        .period-box {
+            border: 1px solid #008d92;
+            border-radius: 6px;
+            padding: 15px;
+            background-color: #f6f4f0;
+        }
+
+        /* TIMELINE SEGURO PARA PDF */
+        table.period-timeline {
+            width: 100%;
+            table-layout: fixed; /* Fuerza anchos exactos */
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        table.period-timeline td {
+            width: 33.33%;
+            border: none;
+            padding: 0;
+            text-align: center;
+            vertical-align: top;
+        }
+
+        .timeline-title {
+            font-size: 11px;
+            color: #0a6067;
+        }
+
+        .timeline-date {
+            color: #666;
+            font-size: 10px;
+            padding-bottom: 8px !important;
+        }
+
+        .timeline-subtitle {
+            font-size: 9px;
+            color: #666;
+            padding-top: 6px !important;
+        }
+
+        /* Estilos de los puntos y líneas */
+        .timeline-graphic-cell {
+            position: relative;
+            height: 24px;
+            vertical-align: middle !important;
+        }
+
+        .line-bg {
+            position: absolute;
+            top: 50%;
+            height: 2px;
+            background-color: #99bfb5;
+            z-index: 1;
+            margin-top: -1px;
+        }
+
+        .line-left { left: 50%; right: 0; }
+        .line-center { left: 0; right: 0; }
+        .line-right { left: 0; right: 50%; }
+
+        .dot {
+            font-size: 24px; /* Tamaño grande para las bolas */
+            line-height: 24px;
+            position: relative;
+            z-index: 2;
+            background-color: #f6f4f0; /* Fondo igual a la caja para ocultar la línea por detrás */
+            padding: 0 4px; /* Espacio para que respire la bola */
+        }
+        
+        .dot-blue { color: #008d92; }
+        .dot-orange { color: #e65100; } /* Tono naranja acorde a la imagen */
+
+        /* TABLA DE DETALLES */
+        table.details-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        th {
-            background-color: #64b0a8; /* 30% Secundario */
-            color: #ffffff;
+
+        table.details-table th {
+            border-bottom: 2px solid #0a6067;
+            color: #0a6067;
             text-align: left;
-            padding: 8px;
-            font-size: 12px;
+            padding: 10px 8px;
+            font-size: 13px;
         }
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #99bfb5;
+
+        table.details-table th.right {
+            text-align: right;
         }
-        .totals-table {
-            width: 50%;
-            float: right;
+
+        table.details-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
         }
-        .totals-table td {
-            border: none;
-            padding: 5px 8px;
-        }
-        .totals-table .grand-total {
+
+        .plan-row td {
             font-weight: bold;
-            color: #0a6067; /* 10% Acento */
-            border-top: 2px solid #0a6067;
+            background-color: #f6f4f0;
+            color: #0a6067;
         }
+
+        /* TABLA DE TOTALES */
+        table.totals-table {
+            width: 45%;
+            float: right;
+            border-collapse: collapse;
+        }
+
+        table.totals-table td {
+            border: none;
+            padding: 6px 8px;
+            font-size: 13px;
+        }
+
+        table.totals-table .grand-total {
+            font-weight: bold;
+            font-size: 14px;
+            color: #0a6067;
+            border-top: 2px solid #008d92;
+        }
+
+        /* FOOTER */
         .footer {
             clear: both;
-            margin-top: 40px;
+            margin-top: 50px;
+            padding-top: 15px;
+            border-top: 1px solid #99bfb5;
             font-size: 10px;
-            color: #666666;
+            color: #666;
             text-align: justify;
         }
     </style>
 </head>
+
 <body>
 
-    <table class="header">
+    <!-- CABECERA -->
+    <table class="header-table">
         <tr>
-            <td style="width: 50%; border: none;">
-                <img src="https://via.placeholder.com/150x50.png?text=LOGO+CONECTA" alt="Logo Conecta" />
+            <td style="width: 40%;">
+                <img src="../static/image/logoconecta.png" alt="Logo Conecta" class="logo" />
+                <div class="company-info">
+                    <strong>CONECTA SAC</strong><br>
+                    RUC: 20123456789<br>
+                    Av. Las Telecomunicaciones 456, Lima
+                </div>
             </td>
-            <td style="width: 50%; text-align: right; border: none;">
-                <h1 class="company-name">CONECTA SAC</h1>
-                <p style="margin: 0;">RUC: 10123456789</p>
+            <td style="width: 60%;" class="greeting-box">
+                <h2>¡Hola, <span th:text="${cliente.nombres + ' ' + cliente.apellidoPaterno}">Juan Perez</span>!</h2>
+                <p>Te enviamos tu recibo del mes.</p>
+                <br>
+                <p class="text-bold" th:text="${direccion.direccionCompleta}">Av. Principal 123</p>
+                <p th:text="${direccion.distrito.nombre + ' - ' + direccion.distrito.provincia.nombre}">Distrito - Lima</p>
+                <p>DNI: <span th:text="${cliente.documento}">12345678</span></p>
             </td>
         </tr>
     </table>
 
-    <div class="greeting-section">
-        <h2>¡Hola, <span th:text="${cliente.nombres + ' ' + cliente.apellidoPaterno + (cliente.apellidoMaterno != null ? ' ' + cliente.apellidoMaterno : '')}">Nombre Cliente</span>! Te enviamos tu recibo del mes.</h2>
-        <p style="margin: 0;" th:text="${direccion.direccionCompleta}">Dirección</p>
-        <p style="margin: 0;" th:text="${direccion.distrito.nombre + ' - ' + direccion.distrito.provincia.nombre + ' - ' + direccion.distrito.provincia.departamento.nombre}">Distrito - P - D</p>
-        <p style="margin: 0;">DNI: <span th:text="${cliente.documento}">12345678</span></p>
+    <!-- BARRA DE ALERTA -->
+    <div class="alert-bar">
+        <p>⚠️ Evita la suspensión y cobro de reconexión por cada línea pagando a tiempo.</p>
     </div>
 
-    <div class="highlight-box">
-        <table style="margin: 0;">
-            <tr>
-                <td style="border: none; width: 33%;">
-                    <p class="highlight-title">Total a pagar</p>
-                    <p class="highlight-amount" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 0.00</p>
-                </td>
-                <td style="border: none; width: 33%; text-align: center;">
-                    <p class="highlight-title">Último día de pago</p>
-                    <p class="highlight-amount" th:text="${#temporals.format(recibo.fechaVencimiento, 'dd/MMM/yyyy')}">---</p>
-                </td>
-                <td style="border: none; width: 34%; text-align: right; vertical-align: top;">
-                    <p style="color: #4a4a4a; font-size: 11px; font-weight: bold; margin: 0; background: rgba(255,255,255,0.7); padding: 5px; border-radius: 3px;">
-                        Evita la suspensión y cobro de reconexión pagando a tiempo.
-                    </p>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <h3 style="color: #0a6067; margin-bottom: 10px;">Tus datos de facturación</h3>
-    <table>
+    <!-- CAJA PRINCIPAL -->
+    <table class="highlight-box">
         <tr>
-            <th style="width: 33%;">Recibo N°</th>
-            <th style="width: 33%;">Emisión del recibo</th>
-            <th style="width: 34%;">Periodo Facturado</th>
-        </tr>
-        <tr>
-            <td th:text="${reciboFolio}">S001-000000000000</td>
-            <td th:text="${#temporals.format(recibo.fechaEmision, 'dd/MMM/yyyy')}">---</td>
-            <td th:text="'Inicio: ' + ${#temporals.format(recibo.periodoInicio, 'dd-MMM')} + ' - Fin: ' + ${#temporals.format(recibo.periodoFin, 'dd-MMM')}">---</td>
+            <td>
+                <p class="hl-title">Total a pagar</p>
+                <p class="hl-amount" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 69.90</p>
+            </td>
+            <td>
+                <p class="hl-title">Último día de pago</p>
+                <p class="hl-date" th:text="${#temporals.format(recibo.fechaVencimiento, 'dd/MMM/yyyy')}">03/Ago/2024</p>
+            </td>
+            <td>
+                <p class="hl-title">Paga con tu Código de Cliente</p>
+                <p style="font-size: 18px; font-weight: bold; margin: 5px 0 0 0; color: #64b0a8;"
+                    th:text="${cliente.id}">10054</p>
+            </td>
         </tr>
     </table>
 
-    <h3 style="color: #0a6067; margin-bottom: 10px;">Detalle de tu recibo</h3>
-    <table>
+    <!-- SECCIÓN DATOS Y PERIODO -->
+    <table class="mid-section">
+        <tr>
+            <!-- Datos de Facturación -->
+            <td style="width: 45%; padding-right: 5%;">
+                <p class="section-title">Tus datos de facturación</p>
+                <table class="info-table">
+                    <tr>
+                        <td style="width: 40%; color: #555;">Recibo N°</td>
+                        <td style="width: 60%;" class="text-bold" th:text="': ' + ${reciboFolio}">: S001-000001</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #555;">Emisión del recibo</td>
+                        <td th:text="': ' + ${#temporals.format(recibo.fechaEmision, 'dd/MMM/yyyy')}">: 15/Jul/2024</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #555;">N° de Contrato</td>
+                        <td th:text="': ' + ${contrato.id}">: 10024</td>
+                    </tr>
+                </table>
+            </td>
+            
+            <!-- Tu Periodo Facturado (Línea de Tiempo) -->
+            <td style="width: 50%;">
+                <div class="period-box">
+                    <p class="section-title" style="font-size: 14px; text-align: center;">Tu periodo facturado</p>
+                    
+                    <table class="period-timeline">
+                        <!-- Títulos -->
+                        <tr>
+                            <td class="text-bold timeline-title">Inicio</td>
+                            <td class="text-bold timeline-title"></td>
+                            <td class="text-bold timeline-title">Fin</td>
+                        </tr>
+                        <!-- Fechas -->
+                        <tr>
+                            <td class="timeline-date" th:text="${#temporals.format(recibo.periodoInicio, 'dd/MMM/yyyy')}">16/Jul/2024</td>
+                            <td class="timeline-date" style="color: #e65100; font-weight: bold;" th:text="${#temporals.format(recibo.fechaVencimiento, 'dd/MMM/yyyy')}">03/Ago/2024</td>
+                            <td class="timeline-date" th:text="${#temporals.format(recibo.periodoFin, 'dd/MMM/yyyy')}">15/Ago/2024</td>
+                        </tr>
+                        <!-- Gráfico de Nodos y Líneas -->
+                        <tr>
+                            <td class="timeline-graphic-cell">
+                                <div class="line-bg line-left"></div>
+                                <span class="dot dot-blue">&#9679;</span>
+                            </td>
+                            <td class="timeline-graphic-cell">
+                                <div class="line-bg line-center"></div>
+                                <span class="dot dot-orange">&#9679;</span>
+                            </td>
+                            <td class="timeline-graphic-cell">
+                                <div class="line-bg line-right"></div>
+                                <span class="dot dot-blue">&#9679;</span>
+                            </td>
+                        </tr>
+                        <!-- Subtítulos -->
+                        <tr>
+                            <td class="timeline-subtitle">Renovación de saldos</td>
+                            <td class="timeline-subtitle">Último día de pago</td>
+                            <td class="timeline-subtitle">Vencimiento de saldos</td>
+                        </tr>
+                    </table>
+                    
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- DETALLES DEL RECIBO -->
+    <p class="section-title">Detalle de tu recibo</p>
+    <p style="text-align: right; font-size: 10px; color: #666; margin-top: -20px;">(*) Puede incluir conceptos exentos o ya gravados con IGV</p>
+    <table class="details-table">
         <thead>
             <tr>
-                <th>Conceptos</th>
+                <th>Conceptos facturados por servicio</th>
                 <th>Unidad</th>
-                <th style="text-align: right;">Monto (Incl. IGV)</th>
+                <th class="right">Monto (Incl. IGV)</th>
             </tr>
         </thead>
         <tbody>
-            <tr style="background-color: #f6f4f0; font-weight: bold;">
-                <td colspan="3" th:text="'Plan: ' + ${contrato.plan.nombre}">Plan Básico</td>
+            <tr class="plan-row">
+                <td th:text="'Plan: ' + ${contrato.plan.nombre}">Plan Fibra 100 Mbps</td>
+                <td></td>
+                <td class="right" th:text="'S/ ' + ${#numbers.formatDecimal(contrato.plan.precio, 1, 2)}">S/ 69.90</td>
             </tr>
             <tr th:each="detalle : ${detalles}">
-                <td th:text="${detalle.descripcion}">Concepto</td>
+                <td th:text="${detalle.concepto}">Cargo fijo del plan</td>
                 <td th:text="${detalle.cantidadDias != null ? detalle.cantidadDias + ' días' : ''}">30 días</td>
-                <td style="text-align: right;" th:text="${#numbers.formatDecimal(detalle.subtotal, 1, 2)}">0.00</td>
+                <td class="right" th:text="${#numbers.formatDecimal(detalle.subtotal, 1, 2)}">69.90</td>
             </tr>
         </tbody>
     </table>
 
+    <!-- TOTALES -->
     <table class="totals-table">
         <tr>
-            <td>Sub Total (sin IGV):</td>
-            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(subTotalCalculado, 1, 2)}">S/ 0.00</td>
+            <td style="color: #555;">Sub Total (sin IGV):</td>
+            <td class="right text-bold" th:text="'S/ ' + ${#numbers.formatDecimal(subTotalCalculado, 1, 2)}">S/ 59.24</td>
         </tr>
         <tr>
-            <td>IGV (18%):</td>
-            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(igvCalculado, 1, 2)}">S/ 0.00</td>
+            <td style="color: #555;">IGV (18%):</td>
+            <td class="right text-bold" th:text="'S/ ' + ${#numbers.formatDecimal(igvCalculado, 1, 2)}">S/ 10.66</td>
         </tr>
         <tr class="grand-total">
             <td>TOTAL A PAGAR:</td>
-            <td style="text-align: right;" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 0.00</td>
+            <td class="right" th:text="'S/ ' + ${#numbers.formatDecimal(recibo.montoTotal, 1, 2)}">S/ 69.90</td>
         </tr>
     </table>
 
+    <!-- FOOTER LEGAL -->
     <div class="footer">
-        <p>Documento válido para efectos tributarios según Res. de Sup. No. 007-99/SUNAT.</p>
-        <p>Los saldos de hasta S/0.09 que no cancele por falta de moneda para el pago en efectivo o por redondeo, se mantendrán como pendientes para su próximo recibo.</p>
+        <p><strong>Documento válido para efectos tributarios según Res. de Sup. No. 007-99/SUNAT.</strong></p>
+        <p>Prorrateo: Sumatoria de los cobros proporcionales a los días con servicio activo y la devolución del cargo fijo del plan pagado por adelantado.<br>
+            Los saldos de hasta S/0.09 que no cancele por falta de moneda de curso legal se mantendrán como pendientes de pago hasta su cancelación efectiva.<br>
+            Montos ya gravados con IGV: Operaciones gravadas con Impuesto general a las ventas (IGV) conforme a lo establecido en la Ley de IGV y su Reglamento.</p>
     </div>
 
 </body>

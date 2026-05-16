@@ -1,10 +1,14 @@
 package pe.idat.BackEndConecta.service;
 
-import pe.idat.BackEndConecta.entity.Cliente;
-
 import java.util.concurrent.CompletableFuture;
 
 public interface NotificacionService {
-    CompletableFuture<Void> enviarCorreoConAdjuntoAsincrono(Cliente cliente, String tipo, String asunto, String mensajeHtml, byte[] archivoAdjunto, String nombreArchivo);
-    CompletableFuture<Void> enviarCorreoAsincrono(Cliente cliente, String tipo, String asunto, String mensajeHtml);
+    CompletableFuture<Void> enviarContratoAsync(Integer contratoId);
+    CompletableFuture<Void> enviarContratoManualAsync(Integer contradoId, String correoDestino);
+
+    CompletableFuture<Void> enviarReciboMensualAsync(Integer reciboId);
+    CompletableFuture<Void> enviarReciboMensualManualAsync(Integer reciboId, String correoDestino);
+
+    CompletableFuture<Void> enviarRecordatorioPreventivoAsync(Integer reciboId);
+    CompletableFuture<Void> enviarAvisoMoraAsync(Integer reciboId);
 }

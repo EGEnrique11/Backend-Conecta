@@ -103,6 +103,18 @@ public class ClienteServiceImpl implements pe.idat.BackEndConecta.service.Client
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ClienteDTO> buscarClientesPaginados(String criterio, String valor, Pageable pageable) {
+        Page<Cliente> clientes;
+        if (criterio == null || criterio.trim().isEmpty() || valor == null || valor.trim().isEmpty() || "TODOS".equalsIgnoreCase(criterio)) {
+            clientes = clienteRepository.findAll(pageable);
+        } else {
+            clientes = clienteRepository.buscarPorCriterio(criterio, valor, pageable);
+        }
+        return clientes.map(clienteMapper::toClienteDTO);
+    }
+
+    @Override
     @Transactional
     public ClienteDTO actualizarCliente(Integer id, ClienteUpdateDTO dto) {
         Cliente cliente = clienteRepository.findById(id)

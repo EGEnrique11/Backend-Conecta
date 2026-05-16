@@ -1,12 +1,19 @@
 package pe.idat.BackEndConecta.service.impl;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import pe.idat.BackEndConecta.dto.ReciboListDTO;
 import pe.idat.BackEndConecta.entity.*;
 import pe.idat.BackEndConecta.entity.enums.EstadoContrato;
 import pe.idat.BackEndConecta.entity.enums.EstadoPago;
+import pe.idat.BackEndConecta.event.ReciboGeneradoEvent;
 import pe.idat.BackEndConecta.repository.*;
 import pe.idat.BackEndConecta.service.FacturacionService;
 
@@ -25,6 +32,7 @@ public class FacturacionServiceImpl implements FacturacionService {
     private final ReciboRepository reciboRepository;
     private final HistorialSuspensionRepository historialSuspensionRepository;
     private final SaldoFavorRepository saldoFavorRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -34,7 +42,7 @@ public class FacturacionServiceImpl implements FacturacionService {
         // Asumiendo Ciclo 15 (Emite el 15, Vence el 3 del sig. mes, Corta el 4)
         LocalDate fechaEmision = fechaEjecucion; // Ej: 15/03/2026
         LocalDate periodoInicio = fechaEmision.plusDays(1); // 16/03/2026
-        
+
         // El periodo fin es el día igual a la fecha de emisión pero del próximo mes
         // Ej: Si la emisión es el 15, el periodo fin es el 15 del mes siguiente
         LocalDate periodoFin = fechaEmision.plusMonths(1); // 15/04/2026
@@ -58,7 +66,7 @@ public class FacturacionServiceImpl implements FacturacionService {
 
         // --- 3. PROCESAMIENTO MASIVO (BILLING BATCH) ---
         for (Contrato contrato : contratos) {
-            
+
             // a) Inicializar Recibo Padre
             Recibo recibo = Recibo.builder()
                     .contrato(contrato)
@@ -85,19 +93,22 @@ public class FacturacionServiceImpl implements FacturacionService {
             subtotalAcumulado = subtotalAcumulado.add(precioPlan);
 
             // d) ITEM 2: Prorrateo de Activación (Si es su primer ciclo)
-            // Lógica asume que si no hay prorrateos anteriores (o facturas en absoluto), se genera.
-            // Para simplicidad, se usará la diferencia entre Fecha Activacion y PeriodoInicio
+            // Lógica asume que si no hay prorrateos anteriores (o facturas en absoluto), se
+            // genera.
+            // Para simplicidad, se usará la diferencia entre Fecha Activacion y
+            // PeriodoInicio
             if (contrato.getFechaActivacion() != null && contrato.getFechaActivacion().isBefore(periodoInicio)) {
-                
+
                 // Validación para saber si le toca prorrateo.
-                // Idealmente, se busca `countByContratoId` en ReciboRepository, 
+                // Idealmente, se busca `countByContratoId` en ReciboRepository,
                 // aquí simulamos condicional directo o un lookup rápido.
-                boolean tieneRecibos = false; //TODO: Mapear contra query o validacion booleana externa.
+                boolean tieneRecibos = false; // TODO: Mapear contra query o validacion booleana externa.
                 if (!tieneRecibos) {
-                    long diasProrrateo = ChronoUnit.DAYS.between(contrato.getFechaActivacion(), periodoInicio.minusDays(1));
+                    long diasProrrateo = ChronoUnit.DAYS.between(contrato.getFechaActivacion(),
+                            periodoInicio.minusDays(1));
                     if (diasProrrateo > 0) {
                         BigDecimal prorrateoSubtotal = costoPorDia.multiply(BigDecimal.valueOf(diasProrrateo));
-                        
+
                         DetalleRecibo prorrateoDetalle = DetalleRecibo.builder()
                                 .concepto("Prorrateo de Activación")
                                 .cantidadDias((int) diasProrrateo)
@@ -113,7 +124,7 @@ public class FacturacionServiceImpl implements FacturacionService {
             // e) ITEM 3: Devoluciones por Suspensión
             List<HistorialSuspension> historialesSuspendidos = historialSuspensionRepository
                     .findByContratoIdAndAplicadoEnReciboIsNull(contrato.getId());
-            
+
             int totalDiasSuspendidos = historialesSuspendidos.stream()
                     .mapToInt(HistorialSuspension::getDiasSuspendidos)
                     .sum();
@@ -122,7 +133,7 @@ public class FacturacionServiceImpl implements FacturacionService {
                 BigDecimal descuentoSuspension = costoPorDia.multiply(BigDecimal.valueOf(totalDiasSuspendidos));
                 // El subtotal es negativo
                 BigDecimal negativoMonto = descuentoSuspension.negate().setScale(2, RoundingMode.HALF_UP);
-                
+
                 DetalleRecibo suspensionDetalle = DetalleRecibo.builder()
                         .concepto("Devolución por Suspensión")
                         .cantidadDias(totalDiasSuspendidos)
@@ -136,18 +147,18 @@ public class FacturacionServiceImpl implements FacturacionService {
             // f) ITEM 4: Saldo a Favor / Billetera
             List<SaldoFavor> saldosATratar = saldoFavorRepository
                     .findByContratoIdAndEstado(contrato.getId(), "ACTIVO");
-            
+
             BigDecimal saldoTotal = saldosATratar.stream()
                     .map(SaldoFavor::getMontoDisponible)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             if (saldoTotal.compareTo(BigDecimal.ZERO) > 0) {
                 // Solo cubrimos hasta el total adeudado. Si el saldo es mayor, queda remanente.
-                BigDecimal aplicable = saldoTotal.min(subtotalAcumulado); 
-                
+                BigDecimal aplicable = saldoTotal.min(subtotalAcumulado);
+
                 if (aplicable.compareTo(BigDecimal.ZERO) > 0) {
                     BigDecimal negativoSaldo = aplicable.negate().setScale(2, RoundingMode.HALF_UP);
-                    
+
                     DetalleRecibo saldoDetalle = DetalleRecibo.builder()
                             .concepto("Aplicación de Saldo a Favor")
                             .precioUnitario(aplicable)
@@ -163,6 +174,8 @@ public class FacturacionServiceImpl implements FacturacionService {
             recibo.setMontoTotal(subtotalAcumulado.setScale(2, RoundingMode.HALF_UP));
             reciboRepository.save(recibo);
 
+            //Lanzar evento
+            eventPublisher.publishEvent(new ReciboGeneradoEvent(this, recibo.getId()));
             // Actualizar Historiales de Suspensión
             for (HistorialSuspension hs : historialesSuspendidos) {
                 hs.setAplicadoEnRecibo(recibo);
@@ -170,7 +183,8 @@ public class FacturacionServiceImpl implements FacturacionService {
             historialSuspensionRepository.saveAll(historialesSuspendidos);
 
             // Actualizar Saldo a Favor (Consumido o Disminuido)
-            // La logica requeriría un loop avanzado, para simplificar lo marco a consumido si se usó
+            // La logica requeriría un loop avanzado, para simplificar lo marco a consumido
+            // si se usó
             for (SaldoFavor sf : saldosATratar) {
                 sf.setMontoDisponible(BigDecimal.ZERO);
                 sf.setEstado("CONSUMIDO");
@@ -183,8 +197,42 @@ public class FacturacionServiceImpl implements FacturacionService {
         return Map.of(
                 "mensaje", "Cierre de facturación completado.",
                 "fechaEjecucion", fechaEjecucion.toString(),
-                "facturasGeneradas", recibosGenerados
-        );
+                "facturasGeneradas", recibosGenerados);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Object> verificarDeudaPendiente(Integer clienteId) {
+        boolean tieneDeuda = reciboRepository.existsDeudaPendienteByClienteId(clienteId);
+        String mensaje = tieneDeuda ? "El cliente tiene recibos pendientes o vencidos." : "El cliente está al día.";
+        return Map.of("tieneDeuda", tieneDeuda, "mensaje", mensaje);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReciboListDTO> obtenerRecibosPaginados(Integer contratoId, List<EstadoPago> estados,
+            Pageable pageable) {
+        Page<Recibo> recibos = reciboRepository.findByContratoIdAndEstadoPagoIn(contratoId, estados, pageable);
+        return recibos.map(r -> {
+            ReciboListDTO dto = ReciboListDTO.builder()
+                    .id(r.getId())
+                    .contratoId(r.getContrato().getId())
+                    .fechaEmision(r.getFechaEmision())
+                    .fechaVencimiento(r.getFechaVencimiento())
+                    .periodoInicio(r.getPeriodoInicio())
+                    .periodoFin(r.getPeriodoFin())
+                    .montoTotal(r.getMontoTotal())
+                    .estadoPago(r.getEstadoPago().name())
+                    .build();
+
+            if (r.getPagos() != null && !r.getPagos().isEmpty()) {
+                // Tomamos el ultimo pago (suponiendo orden de insercion o unico pago)
+                Pago ultimoPago = r.getPagos().get(r.getPagos().size() - 1);
+                dto.setFechaPago(ultimoPago.getFechaPago());
+                dto.setMetodoPago(ultimoPago.getMetodoPago());
+            }
+            return dto;
+        });
     }
 
     // Cron Job: Ejecuta el día 15 de cada mes a las 4:00 AM
@@ -192,12 +240,12 @@ public class FacturacionServiceImpl implements FacturacionService {
     public void jobFacturacionAutomatica() {
         org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(FacturacionServiceImpl.class);
         log.info("Iniciando CRON JOB de Facturación (Día 15) a las 4:00 AM...");
-        
+
         // 1 es el ID estático de tu ciclo de pago "Ciclo 15"
-        Integer cicloId = 1; 
-        
+        Integer cicloId = 1;
+
         Map<String, Object> resultado = generarRecibosPorCiclo(cicloId, LocalDate.now());
-        
+
         log.info("CRON JOB DE FACTURACIÓN FINALIZADO => {}", resultado);
     }
 }

@@ -25,4 +25,12 @@ public interface ClienteRepository extends JpaRepository<Cliente, Integer> {
                                            @Param("nombres") String nombres, 
                                            @Param("apellidoPaterno") String apellidoPaterno, 
                                            Pageable pageable);
+
+    @Query("SELECT c FROM Cliente c WHERE " +
+           "(:criterio = 'DOCUMENTO' AND c.documento = :valor) OR " +
+           "(:criterio = 'NOMBRE' AND (LOWER(c.nombres) LIKE LOWER(CONCAT('%', :valor, '%')) OR LOWER(c.apellidoPaterno) LIKE LOWER(CONCAT('%', :valor, '%')))) OR " +
+           "(:criterio = 'CELULAR' AND c.celular = :valor) OR " +
+           "(:criterio = 'CODIGO' AND CAST(c.id AS string) = :valor) OR " +
+           "(:criterio = 'TODOS')")
+    Page<Cliente> buscarPorCriterio(@Param("criterio") String criterio, @Param("valor") String valor, Pageable pageable);
 }

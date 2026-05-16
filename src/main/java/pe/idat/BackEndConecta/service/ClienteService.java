@@ -12,4 +12,5 @@ public interface ClienteService {
     ClienteDTO actualizarCliente(Integer id, ClienteUpdateDTO dto);
     void eliminarCliente(Integer id);
     java.util.Optional<ClienteDTO> buscarPorDni(String dni);
+    Page<ClienteDTO> buscarClientesPaginados(String criterio, String valor, Pageable pageable);
 }

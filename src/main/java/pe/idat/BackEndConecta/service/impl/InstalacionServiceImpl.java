@@ -1,6 +1,8 @@
 package pe.idat.BackEndConecta.service.impl;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.idat.BackEndConecta.dto.InstalacionObservacionDTO;
@@ -11,6 +13,7 @@ import pe.idat.BackEndConecta.entity.Instalacion;
 import pe.idat.BackEndConecta.entity.enums.EstadoCliente;
 import pe.idat.BackEndConecta.entity.enums.EstadoContrato;
 import pe.idat.BackEndConecta.entity.enums.EstadoInstalacion;
+import pe.idat.BackEndConecta.event.ContratoActivoEvent;
 import pe.idat.BackEndConecta.repository.ClienteRepository;
 import pe.idat.BackEndConecta.repository.ContratoRepository;
 import pe.idat.BackEndConecta.repository.EmpleadoRepository;
@@ -30,6 +33,7 @@ public class InstalacionServiceImpl implements InstalacionService {
     private final ContratoRepository contratoRepository;
     private final ClienteRepository clienteRepository;
     private final EmpleadoRepository empleadoRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -42,8 +46,8 @@ public class InstalacionServiceImpl implements InstalacionService {
 
         activarContratoYPromocion(instalacion.getContrato());
         activarClienteSiCorresponde(instalacion.getContrato().getCliente());
-
-        // TODO: Generar PDF del contrato usando Thymeleaf
+        //Se anuncia el evento para poder generar el pdf del contrato
+        eventPublisher.publishEvent(new ContratoActivoEvent(this, instalacion.getContrato().getId()));
         return Map.of("mensaje", "La instalación ha sido completada y el contrato activado correctamente.");
     }
 

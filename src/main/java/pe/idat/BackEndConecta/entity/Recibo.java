@@ -55,6 +55,10 @@ public class Recibo {
     @Builder.Default
     private List<DetalleRecibo> detalles = new ArrayList<>();
 
+    @OneToMany(mappedBy = "recibo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Pago> pagos = new ArrayList<>();
+
     public void addDetalle(DetalleRecibo detalle) {
         detalles.add(detalle);
         detalle.setRecibo(this);
