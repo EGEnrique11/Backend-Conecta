@@ -79,8 +79,7 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getEfectividadCobro() {
-        // En una DB productiva masiva, el pago vs vencimiento se checa en Pago / Historial. 
-        // Simplificado: Efectividad global de Recibos pagados antes de mora.
+        //Efectividad global de Recibos pagados antes de mora.
         List<EstadoPago> estados = reciboRepository.findAllEstadosPagos();
         
         long total = estados.size();
@@ -113,7 +112,34 @@ public class DashboardServiceImpl implements DashboardService {
         result.put("ingresosMesActual", ingresosMes);
         result.put("tasaMoraPorcentual", BigDecimal.valueOf(moraPx).setScale(2, RoundingMode.HALF_UP));
         result.put("instalacionesPendientesHoy", pendientesHoy);
-        
         return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getResumenInstalaciones(LocalDate inicio, LocalDate fin, EstadoInstalacion estado) {
+        List<Object[]> queryResults = instalacionRepository.countInstalacionesPorFiltros(inicio, fin, estado);
+        
+        Map<String, Long> resumen = new HashMap<>();
+        resumen.put("PENDIENTE", 0L);
+        resumen.put("REPROGRAMADA", 0L);
+        resumen.put("EN_RUTA", 0L);
+        resumen.put("EN_PROGRESO", 0L);
+        resumen.put("COMPLETADA", 0L);
+        resumen.put("CANCELADA", 0L);
+        
+        long total = 0L;
+        
+        for (Object[] result : queryResults) {
+            EstadoInstalacion est = (EstadoInstalacion) result[0];
+            Long count = (Long) result[1];
+            if (est != null) {
+                resumen.put(est.name(), count);
+                total += count;
+            }
+        }
+        
+        resumen.put("TOTAL", total);
+        return resumen;
     }
 }

@@ -16,4 +16,5 @@ public interface DashboardService {
     Map<String, BigDecimal> getFinanzasIngresosVsDeuda();
     Map<String, Object> getEfectividadCobro();
     Map<String, Object> getResumenKPIs();
+    Map<String, Long> getResumenInstalaciones(java.time.LocalDate inicio, java.time.LocalDate fin, pe.idat.BackEndConecta.entity.enums.EstadoInstalacion estado);
 }

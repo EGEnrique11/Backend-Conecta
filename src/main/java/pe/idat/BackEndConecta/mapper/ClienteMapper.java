@@ -6,6 +6,7 @@ import org.mapstruct.Mapping;
 import pe.idat.BackEndConecta.dto.ClienteDTO;
 import pe.idat.BackEndConecta.dto.ClienteRegistrationDTO;
 import pe.idat.BackEndConecta.dto.ClienteUpdateDTO;
+import pe.idat.BackEndConecta.dto.DireccionDTO;
 import pe.idat.BackEndConecta.entity.Cliente;
 import pe.idat.BackEndConecta.entity.Direccion;
 
@@ -30,14 +31,14 @@ public interface ClienteMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "tipoPersona", constant = "CLIENTE")
-    Cliente toClienteEntity(pe.idat.BackEndConecta.dto.ClienteDTO dto);
+    Cliente toClienteEntity(ClienteDTO dto);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "cliente", ignore = true)
     @Mapping(target = "distrito", ignore = true)
     @Mapping(target = "direccionCompleta", ignore = true)
     @Mapping(target = "activo", ignore = true)
-    Direccion toDireccionEntity(pe.idat.BackEndConecta.dto.DireccionDTO dto);
+    Direccion toDireccionEntity(DireccionDTO dto);
 
     ClienteDTO toClienteDTO(Cliente cliente);
 

@@ -54,4 +54,13 @@ public interface InstalacionRepository extends JpaRepository<Instalacion, Intege
            "(:criterio = 'NOMBRE' AND (LOWER(i.contrato.cliente.nombres) LIKE LOWER(CONCAT('%', :valor, '%')) OR LOWER(i.contrato.cliente.apellidoPaterno) LIKE LOWER(CONCAT('%', :valor, '%')))) OR " +
            "(:criterio = 'CELULAR' AND i.contrato.cliente.celular = :valor)")
     List<Instalacion> buscarPorCriterioYValor(@Param("criterio") String criterio, @Param("valor") String valor);
+
+    @Query("SELECT i.estado, COUNT(i) FROM Instalacion i WHERE " +
+           "(:inicio IS NULL OR i.fechaProgramada >= :inicio) AND " +
+           "(:fin IS NULL OR i.fechaProgramada <= :fin) AND " +
+           "(:estado IS NULL OR i.estado = :estado) " +
+           "GROUP BY i.estado")
+    List<Object[]> countInstalacionesPorFiltros(@Param("inicio") LocalDate inicio, 
+                                                @Param("fin") LocalDate fin, 
+                                                @Param("estado") EstadoInstalacion estado);
 }

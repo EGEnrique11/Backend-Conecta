@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import pe.idat.BackEndConecta.dto.projections.CrecimientoMensualProjection;
 import pe.idat.BackEndConecta.dto.projections.ProductividadTecnicaProjection;
 import pe.idat.BackEndConecta.dto.projections.RankingVendedorProjection;
+import pe.idat.BackEndConecta.entity.enums.EstadoInstalacion;
 import pe.idat.BackEndConecta.service.DashboardService;
 
 import java.math.BigDecimal;
@@ -58,5 +59,13 @@ public class DashboardController {
     @GetMapping("/resumen")
     public ResponseEntity<Map<String, Object>> getResumenKPIs() {
         return ResponseEntity.ok(dashboardService.getResumenKPIs());
+    }
+
+    @GetMapping("/operaciones/instalaciones-estados")
+    public ResponseEntity<Map<String, Long>> getResumenInstalaciones(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate inicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin,
+            @RequestParam(required = false) EstadoInstalacion estado) {
+        return ResponseEntity.ok(dashboardService.getResumenInstalaciones(inicio, fin, estado));
     }
 }
