@@ -2,6 +2,8 @@ package pe.idat.BackEndConecta.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import pe.idat.BackEndConecta.dto.ClienteContactoDTO;
 import pe.idat.BackEndConecta.dto.ClienteDTO;
 import pe.idat.BackEndConecta.dto.ClienteRegistrationDTO;
 import pe.idat.BackEndConecta.dto.ClienteUpdateDTO;
@@ -13,4 +15,5 @@ public interface ClienteService {
     void eliminarCliente(Integer id);
     java.util.Optional<ClienteDTO> buscarPorDni(String dni);
     Page<ClienteDTO> buscarClientesPaginados(String criterio, String valor, Pageable pageable);
+    ClienteDTO actualizarContacto(Integer id, ClienteContactoDTO dto);
 }

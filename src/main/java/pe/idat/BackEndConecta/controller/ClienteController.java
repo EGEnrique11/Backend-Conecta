@@ -4,10 +4,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+
+import pe.idat.BackEndConecta.dto.ClienteContactoDTO;
 import pe.idat.BackEndConecta.dto.ClienteDTO;
 import pe.idat.BackEndConecta.dto.ClienteRegistrationDTO;
 import pe.idat.BackEndConecta.dto.ClienteUpdateDTO;
@@ -21,7 +24,7 @@ import pe.idat.BackEndConecta.service.FacturacionService;
 @RestController
 @RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -70,13 +73,6 @@ public class ClienteController {
     public ResponseEntity<Map<String, Object>> verificarDeudaPendiente(@PathVariable Integer id) {
         return ResponseEntity.ok(facturacionService.verificarDeudaPendiente(id));
     }
-    @GetMapping("/buscar")
-    public ResponseEntity<Page<ClienteDTO>> buscarClientesPaginados(
-            @RequestParam(required = false) String criterio,
-            @RequestParam(required = false) String valor,
-            @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(clienteService.buscarClientesPaginados(criterio, valor, pageable));
-    }
 
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, Object>> actualizarCliente(
@@ -115,5 +111,26 @@ public class ClienteController {
             response.put("error", e.getMessage());
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PutMapping("/{id}/contacto")
+    public ResponseEntity<Map<String, Object>> actualizarContactoCliente(@PathVariable Integer id,
+            @Valid @RequestBody ClienteContactoDTO dto) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            ClienteDTO actualizado = clienteService.actualizarContacto(id, dto);
+            response.put("mensaje", "Datos de contacto actualizados exitosamente");
+            response.put("datos", actualizado);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            response.put("mensaje", "Error en la actualización");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            response.put("mensaje", "Error interno en el servidor");
+            response.put("error", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 }

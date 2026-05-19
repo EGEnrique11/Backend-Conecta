@@ -15,6 +15,8 @@ import pe.idat.BackEndConecta.repository.PersonaRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import pe.idat.BackEndConecta.dto.ClienteContactoDTO;
 import pe.idat.BackEndConecta.dto.ClienteDTO;
 import pe.idat.BackEndConecta.dto.ClienteUpdateDTO;
 import pe.idat.BackEndConecta.entity.enums.EstadoCliente;
@@ -165,5 +167,17 @@ public class ClienteServiceImpl implements pe.idat.BackEndConecta.service.Client
         
         sj.add("- " + nombreDistrito);
         return sj.toString();
+    }
+
+    @Override
+    @Transactional
+    public ClienteDTO actualizarContacto(Integer id, ClienteContactoDTO dto) {
+        Cliente cliente = clienteRepository.findById(id)
+        .orElseThrow(()-> new IllegalArgumentException("Cliente no encontrado con el Id: "+id));
+
+        cliente.setCorreo(dto.getCorreo());
+        cliente.setCelular(dto.getCelular());
+        cliente = clienteRepository.save(cliente);
+        return clienteMapper.toClienteDTO(cliente);
     }
 }
