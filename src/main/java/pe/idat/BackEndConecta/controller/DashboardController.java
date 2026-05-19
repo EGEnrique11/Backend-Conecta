@@ -3,6 +3,7 @@ package pe.idat.BackEndConecta.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.idat.BackEndConecta.dto.projections.CrecimientoMensualProjection;
 import pe.idat.BackEndConecta.dto.projections.ProductividadTecnicaProjection;
@@ -17,7 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class DashboardController {
 
     private final DashboardService dashboardService;

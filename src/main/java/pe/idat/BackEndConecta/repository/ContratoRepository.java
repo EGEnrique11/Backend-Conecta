@@ -24,4 +24,5 @@ public interface ContratoRepository extends JpaRepository<Contrato, Integer> {
     Long countByEstado(EstadoContrato estado);
 
     List<Contrato> findByCicloPagoIdAndEstadoIn(Integer cicloPagoId, List<EstadoContrato> estados);
+    List<Contrato> findByClienteId(Integer clienteId);
 }
