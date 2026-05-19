@@ -19,6 +19,7 @@ import pe.idat.BackEndConecta.entity.enums.EstadoPago;
 import pe.idat.BackEndConecta.service.FacturacionService;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -38,7 +39,7 @@ public class FacturacionController {
     @GetMapping("/contratos/{contratoId}/recibos")
     public ResponseEntity<Page<ReciboListDTO>> obtenerRecibosPaginados(
             @PathVariable Integer contratoId,
-            @RequestParam(required = false) java.util.List<EstadoPago> estados,
+            @RequestParam(required = false) List<EstadoPago> estados,
             @PageableDefault(size = 12) Pageable pageable) {
 
         if (estados == null || estados.isEmpty()) {

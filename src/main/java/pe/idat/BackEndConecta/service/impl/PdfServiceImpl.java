@@ -83,7 +83,7 @@ public class PdfServiceImpl implements PdfService {
         context.setVariable("cliente", contrato.getCliente());
         context.setVariable("direccion", contrato.getDireccion());
         context.setVariable("plan", contrato.getPlan());
-        context.setVariable("ciclo", contrato.getCicloPago().getDiaEmision());
+        context.setVariable("ciclo", contrato.getCicloPago());
         String htmlContent = templateEngine.process("contrato-template", context);
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             String baseUri = new ClassPathResource("/static/").getURL().toString();

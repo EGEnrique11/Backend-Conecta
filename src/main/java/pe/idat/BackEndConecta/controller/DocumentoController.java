@@ -2,14 +2,19 @@ package pe.idat.BackEndConecta.controller;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.idat.BackEndConecta.dto.EmailRequestDTO;
 import pe.idat.BackEndConecta.service.NotificacionService;
+import pe.idat.BackEndConecta.service.PdfService;
 
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/v1/documentos")
@@ -18,6 +23,7 @@ import java.util.Map;
 public class DocumentoController {
 
     private final NotificacionService notificacionService;
+    private final PdfService pdfService;
 
     @PostMapping("/contrato/{id}/enviar-correo")
     public ResponseEntity<Map<String, String>> enviarContratoCorreo(
@@ -51,4 +57,26 @@ public class DocumentoController {
         }
 
     }
+
+    @GetMapping("/recibo/{reciboId}/pdf")
+    public ResponseEntity<byte[]> descargarReciboPdf(@PathVariable Integer reciboId) {
+        byte[] pdfRecibo = pdfService.generarReciboPdf(reciboId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        // "inline" para abrir en el navegador, "attachment" para forzar descarga
+        headers.setContentDisposition(ContentDisposition.inline().filename("recibo_" + reciboId + ".pdf").build());
+
+        return new ResponseEntity<>(pdfRecibo, headers, HttpStatus.OK);
+    }
+
+    @GetMapping("/contrato/{contratoId}/pdf")
+    public ResponseEntity<byte[]> descargarContratoPdf(@PathVariable Integer contratoId) {
+        byte[] pdfContrato = pdfService.generarContratoPdf(contratoId);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline().filename("Contrato_"+contratoId+".pdf").build());
+        return new ResponseEntity<>(pdfContrato, headers, HttpStatus.OK);
+    }
+    
 }

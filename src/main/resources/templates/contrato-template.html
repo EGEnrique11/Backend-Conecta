@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8"/>
     <title>Contrato de Servicio - CONECTA</title>
     <style>
         body { 
@@ -100,7 +100,7 @@
             </td>
             <td style="width: 30%; text-align: right;">
                 <!-- El logo alineado a la derecha con un tamaño máximo controlado -->
-                <img src="/src/main/resources/static/image/logoconecta.png" class="logo" alt="Logo CONECTA" />
+                <img src="image/logoconecta.png" class="logo" alt="Logo CONECTA" />
             </td>
         </tr>
     </table>
@@ -156,11 +156,11 @@
     <div>
         <div class="firma-box" style="margin-left: 5%;">
             <div class="firma-line"></div>
-            <p><strong>Firma del Cliente</strong><br>DNI: <span th:text="${cliente.documento}">12345678</span></p>
+            <p><strong>Firma del Cliente</strong><br/>DNI: <span th:text="${cliente.documento}">12345678</span></p>
         </div>
         <div class="firma-box" style="margin-left: 10%;">
             <div class="firma-line"></div>
-            <p><strong>CONECTA SAC</strong><br>Área de Operaciones</p>
+            <p><strong>CONECTA SAC</strong><br/>Área de Operaciones</p>
         </div>
     </div>
 </body>

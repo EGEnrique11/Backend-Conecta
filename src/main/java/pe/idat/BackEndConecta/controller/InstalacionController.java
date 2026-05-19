@@ -3,6 +3,7 @@ package pe.idat.BackEndConecta.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pe.idat.BackEndConecta.dto.InstalacionObservacionDTO;
 import pe.idat.BackEndConecta.dto.InstalacionReprogramarDTO;
@@ -13,7 +14,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/instalaciones")
 @RequiredArgsConstructor
-@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
+@PreAuthorize("hasAnyRole('ADMIN', 'TECNICO')")
 public class InstalacionController {
 
     private final InstalacionService instalacionService;

@@ -66,7 +66,8 @@ public class DespachoServiceImpl implements DespachoService {
         instalacion.setTecnico(tecnico);
 
         // Cambio Automático: De PENDIENTE o REPROGRAMADA a EN_RUTA
-        if (instalacion.getEstado() == EstadoInstalacion.PENDIENTE || instalacion.getEstado() == EstadoInstalacion.REPROGRAMADA) {
+        if (instalacion.getEstado() == EstadoInstalacion.PENDIENTE
+                || instalacion.getEstado() == EstadoInstalacion.REPROGRAMADA) {
             instalacion.setEstado(EstadoInstalacion.EN_RUTA);
         }
 
@@ -78,7 +79,8 @@ public class DespachoServiceImpl implements DespachoService {
     @Override
     @Transactional(readOnly = true)
     public List<InstalacionPendienteDTO> obtenerAgendaTecnico(Integer tecnicoId, LocalDate fecha) {
-        return instalacionRepository.findByTecnicoIdAndFechaProgramadaOrderByBloqueHorario_HoraInicioAsc(tecnicoId, fecha).stream()
+        return instalacionRepository
+                .findByTecnicoIdAndFechaProgramadaOrderByBloqueHorario_HoraInicioAsc(tecnicoId, fecha).stream()
                 .map(this::mapearAInstalacionPendienteDTO)
                 .collect(Collectors.toList());
     }
@@ -92,7 +94,7 @@ public class DespachoServiceImpl implements DespachoService {
     }
 
     // --- MÉTODOS PRIVADOS SRP ---
-
+    
     private Instalacion buscarInstalacionValidada(Integer id) {
         Instalacion instalacion = instalacionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Instalación no encontrada."));
@@ -110,7 +112,7 @@ public class DespachoServiceImpl implements DespachoService {
                         "El empleado no existe o no tiene el rol de Técnico asignado."));
     }
 
-    //MÉTODO DE MAPEO
+    // MÉTODO DE MAPEO
     private InstalacionPendienteDTO mapearAInstalacionPendienteDTO(Instalacion inst) {
         InstalacionPendienteDTO dto = new InstalacionPendienteDTO();
         dto.setId(inst.getId());
@@ -136,8 +138,10 @@ public class DespachoServiceImpl implements DespachoService {
                 ? inst.getTecnico().getNombres() + " " + inst.getTecnico().getApellidoPaterno()
                 : "Desconocido");
 
-        if (inst.getContrato() != null && inst.getContrato().getPlan() != null && inst.getContrato().getPlan().getServicio() != null) {
-            dto.setDetallePedido(inst.getContrato().getPlan().getNombre() + " - " + inst.getContrato().getPlan().getServicio().getNombre());
+        if (inst.getContrato() != null && inst.getContrato().getPlan() != null
+                && inst.getContrato().getPlan().getServicio() != null) {
+            dto.setDetallePedido(inst.getContrato().getPlan().getNombre() + " - "
+                    + inst.getContrato().getPlan().getServicio().getNombre());
         } else {
             dto.setDetallePedido("Sin detalle");
         }

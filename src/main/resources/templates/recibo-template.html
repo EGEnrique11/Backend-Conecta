@@ -299,17 +299,17 @@
     <table class="header-table">
         <tr>
             <td style="width: 40%;">
-                <img src="../static/image/logoconecta.png" alt="Logo Conecta" class="logo" />
+                <img src="image/logoconecta.png" alt="Logo Conecta" class="logo" />
                 <div class="company-info">
-                    <strong>CONECTA SAC</strong><br>
-                    RUC: 20123456789<br>
+                    <strong>CONECTA SAC</strong><br/>
+                    RUC: 20123456789<br/>
                     Av. Las Telecomunicaciones 456, Lima
                 </div>
             </td>
             <td style="width: 60%;" class="greeting-box">
                 <h2>¡Hola, <span th:text="${cliente.nombres + ' ' + cliente.apellidoPaterno}">Juan Perez</span>!</h2>
                 <p>Te enviamos tu recibo del mes.</p>
-                <br>
+                <br/>
                 <p class="text-bold" th:text="${direccion.direccionCompleta}">Av. Principal 123</p>
                 <p th:text="${direccion.distrito.nombre + ' - ' + direccion.distrito.provincia.nombre}">Distrito - Lima</p>
                 <p>DNI: <span th:text="${cliente.documento}">12345678</span></p>
@@ -453,8 +453,8 @@
     <!-- FOOTER LEGAL -->
     <div class="footer">
         <p><strong>Documento válido para efectos tributarios según Res. de Sup. No. 007-99/SUNAT.</strong></p>
-        <p>Prorrateo: Sumatoria de los cobros proporcionales a los días con servicio activo y la devolución del cargo fijo del plan pagado por adelantado.<br>
-            Los saldos de hasta S/0.09 que no cancele por falta de moneda de curso legal se mantendrán como pendientes de pago hasta su cancelación efectiva.<br>
+        <p>Prorrateo: Sumatoria de los cobros proporcionales a los días con servicio activo y la devolución del cargo fijo del plan pagado por adelantado.<br/>
+            Los saldos de hasta S/0.09 que no cancele por falta de moneda de curso legal se mantendrán como pendientes de pago hasta su cancelación efectiva.<br/>
             Montos ya gravados con IGV: Operaciones gravadas con Impuesto general a las ventas (IGV) conforme a lo establecido en la Ley de IGV y su Reglamento.</p>
     </div>
 

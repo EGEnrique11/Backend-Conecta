@@ -38,7 +38,8 @@ public class InstalacionServiceImpl implements InstalacionService {
     @Override
     @Transactional
     public Map<String, String> completarInstalacion(Integer instalacionId, InstalacionObservacionDTO dto) {
-        Instalacion instalacion = buscarYValidarInstalacion(instalacionId, "completar");
+        Instalacion instalacion = obtenerInstalacion(instalacionId);
+        validarParaCompletar(instalacion.getEstado());
 
         instalacion.setEstado(EstadoInstalacion.COMPLETADA);
         agregarObservacion(instalacion, dto);
@@ -46,7 +47,7 @@ public class InstalacionServiceImpl implements InstalacionService {
 
         activarContratoYPromocion(instalacion.getContrato());
         activarClienteSiCorresponde(instalacion.getContrato().getCliente());
-        //Se anuncia el evento para poder generar el pdf del contrato
+        // Se anuncia el evento para poder generar el pdf del contrato
         eventPublisher.publishEvent(new ContratoActivoEvent(this, instalacion.getContrato().getId()));
         return Map.of("mensaje", "La instalación ha sido completada y el contrato activado correctamente.");
     }
@@ -54,7 +55,8 @@ public class InstalacionServiceImpl implements InstalacionService {
     @Override
     @Transactional
     public Map<String, String> cancelarInstalacion(Integer instalacionId, InstalacionObservacionDTO dto) {
-        Instalacion instalacion = buscarYValidarInstalacion(instalacionId, "cancelar");
+        Instalacion instalacion = obtenerInstalacion(instalacionId);
+        validarParaCancelar(instalacion.getEstado());
 
         instalacion.setEstado(EstadoInstalacion.CANCELADA);
         instalacion.setTecnico(null);
@@ -72,7 +74,8 @@ public class InstalacionServiceImpl implements InstalacionService {
     @Override
     @Transactional
     public Map<String, String> reprogramarInstalacion(Integer instalacionId, InstalacionReprogramarDTO dto) {
-        Instalacion instalacion = buscarYValidarInstalacion(instalacionId, "reprogramar");
+        Instalacion instalacion = obtenerInstalacion(instalacionId);
+        validarParaReprogramar(instalacion.getEstado());
 
         validarCuposDisponibles(dto.getNuevaFecha(), instalacion.getFechaProgramada());
 
@@ -82,7 +85,9 @@ public class InstalacionServiceImpl implements InstalacionService {
         instalacion.setEstado(EstadoInstalacion.REPROGRAMADA);
 
         if (dto.getMotivo() != null && !dto.getMotivo().isEmpty()) {
-            String observacionesAntiguas = instalacion.getObservaciones() != null ? instalacion.getObservaciones() + " | " : "";
+            String observacionesAntiguas = instalacion.getObservaciones() != null
+                    ? instalacion.getObservaciones() + " | "
+                    : "";
             instalacion.setObservaciones(observacionesAntiguas + "Motivo de Reprogramación: " + dto.getMotivo());
         }
 
@@ -94,38 +99,61 @@ public class InstalacionServiceImpl implements InstalacionService {
     @Override
     @Transactional
     public Map<String, String> iniciarInstalacion(Integer instalacionId) {
-        Instalacion instalacion = instalacionRepository.findById(instalacionId)
-                .orElseThrow(() -> new IllegalArgumentException("Instalacion no encontrada con ID: " + instalacionId));
-        
-        if (instalacion.getEstado() != EstadoInstalacion.EN_RUTA && instalacion.getEstado() != EstadoInstalacion.PENDIENTE && instalacion.getEstado() != EstadoInstalacion.REPROGRAMADA) {
-             throw new IllegalArgumentException("La instalación no se puede iniciar en su estado actual (" + instalacion.getEstado() + ").");
-        }
-
+        // Obtener
+        Instalacion instalacion = obtenerInstalacion(instalacionId);
+        // Validar
+        validarParaIniciar(instalacion.getEstado());
+        // Ejecutar la logica
         instalacion.setEstado(EstadoInstalacion.EN_PROCESO);
-        
-        String observacionesAntiguas = instalacion.getObservaciones() != null ? instalacion.getObservaciones() + " | " : "";
+        String observacionesAntiguas = instalacion.getObservaciones() != null ? instalacion.getObservaciones() + " | "
+                : "";
         instalacion.setObservaciones(observacionesAntiguas + "Instalación iniciada en campo por el técnico.");
-        
         instalacionRepository.save(instalacion);
-        
         return Map.of("mensaje", "Instalación iniciada con éxito.");
     }
 
     // Metodos
-    private Instalacion buscarYValidarInstalacion(Integer instalacionId, String accion) {
-        Instalacion instalacion = instalacionRepository.findById(instalacionId)
+    private Instalacion obtenerInstalacion(Integer instalacionId) {
+        return instalacionRepository.findById(instalacionId)
                 .orElseThrow(() -> new IllegalArgumentException("Instalacion no encontrada con ID: " + instalacionId));
-        if (instalacion.getEstado() != EstadoInstalacion.PENDIENTE
-                && instalacion.getEstado() != EstadoInstalacion.REPROGRAMADA) {
+    }
+
+    private void validarParaIniciar(EstadoInstalacion estado) {
+        if (estado != EstadoInstalacion.EN_RUTA) {
             throw new IllegalArgumentException(
-                    "La instalación no se puede " + accion + " en su estado actual (" + instalacion.getEstado() + ").");
+                    "La instalación no se puede iniciar en su estado actual (" + estado + "). " +
+                            "Debe estar EN_RUTA (asignada a un técnico).");
         }
-        return instalacion;
+    }
+
+    private void validarParaCompletar(EstadoInstalacion estado) {
+        if (estado != EstadoInstalacion.EN_PROCESO) {
+            throw new IllegalArgumentException(
+                    "La instalación no se puede completar en su estado actual (" + estado + "). " +
+                            "Primero debe ser iniciada.");
+        }
+    }
+
+    private void validarParaCancelar(EstadoInstalacion estado) {
+        if (estado == EstadoInstalacion.COMPLETADA || estado == EstadoInstalacion.CANCELADA) {
+            throw new IllegalArgumentException(
+                    "La instalación no se puede cancelar en su estado actual (" + estado + ").");
+        }
+    }
+
+    private void validarParaReprogramar(EstadoInstalacion estado) {
+        if (estado == EstadoInstalacion.COMPLETADA || estado == EstadoInstalacion.CANCELADA) {
+            throw new IllegalArgumentException(
+                    "La instalacion no se puede reprogramar en su estado actual (" + estado + ").");
+        }
     }
 
     private void agregarObservacion(Instalacion instalacion, InstalacionObservacionDTO dto) {
         if (dto != null && dto.getObservaciones() != null && !dto.getObservaciones().isEmpty()) {
-            instalacion.setObservaciones(dto.getObservaciones());
+            String observacionesAntiguas = instalacion.getObservaciones() != null
+                    ? instalacion.getObservaciones() + " | "
+                    : "";
+            instalacion.setObservaciones(observacionesAntiguas + dto.getObservaciones());
         }
     }
 
@@ -154,7 +182,8 @@ public class InstalacionServiceImpl implements InstalacionService {
         long totalTecnicos = empleadoRepository.count();
         long cuposMaximos = totalTecnicos * 2;
         // 1. Definimos los estados que contabilizan como "cupo ocupado"
-        List<EstadoInstalacion> estadosQueOcupanCupo = List.of(EstadoInstalacion.PENDIENTE, EstadoInstalacion.REPROGRAMADA);
+        List<EstadoInstalacion> estadosQueOcupanCupo = List.of(EstadoInstalacion.PENDIENTE,
+                EstadoInstalacion.REPROGRAMADA);
         // 2. Pasamos la lista de Enums al repositorio
         Long agendadas = instalacionRepository.countInstalacionesEnFecha(nuevaFecha, estadosQueOcupanCupo);
         boolean isSameSlot = fechaActual.equals(nuevaFecha);
