@@ -1,6 +1,7 @@
 package pe.idat.BackEndConecta.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pe.idat.BackEndConecta.dto.VentaCompletaRequestDTO;
@@ -37,7 +38,7 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public VentaResponseDTO generarVenta(VentaCompletaRequestDTO dto) {
         validarTiemposYCupos(dto.getFechaProgramada());
-        
+
         // --- GESTIÓN DE CLIENTE ---
         Cliente cliente = obtenerOCrearCliente(dto);
         // --- GESTIÓN DE DIRECCIÓN ---
@@ -51,11 +52,16 @@ public class VentaServiceImpl implements VentaService {
         CicloPago cicloPago = new CicloPago();
         cicloPago.setId(1);
 
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Empleado vendedorActual = empleadoRepository.findByUsername(username).orElseThrow(
+                        () -> new IllegalArgumentException("Vendedor no encontrado"));
         Empleado vendedor = new Empleado();
-        vendedor.setId(2);
+        vendedor.setId(vendedorActual.getId());
+                
 
         // --- CREACIÓN DEL CONTRATO ---
-        Contrato contrato = crearYGuardarContrato(cliente, direccion, plan, dto.getPromocionId(), fechaFinPromocion, cicloPago, vendedor);
+        Contrato contrato = crearYGuardarContrato(cliente, direccion, plan, dto.getPromocionId(), fechaFinPromocion,
+                cicloPago, vendedor);
         // --- CREACIÓN DE LA INSTALACIÓN ---
         Instalacion instalacion = crearYGuardarInstalacion(contrato, dto.getFechaProgramada());
 
